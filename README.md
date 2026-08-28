@@ -24,12 +24,8 @@ cp .env.example .env   # bei Bedarf VITE_API_BASE_URL anpassen
 npm run dev
 ```
 
-Läuft dann auf `http://localhost:5173`.
-
-**Offener Punkt auf `isd`-Seite:** Die CORS-Konfiguration von `isd`
-(`config/cors.php`) muss den Vite-Dev-Server-Origin kennen, bevor das Portal
-lokal wirklich gegen `isd` sprechen kann. Das ist eine Änderung am
-`isd`-Projekt, nicht an diesem Repo.
+Läuft dann auf `http://localhost:5173`. Dieser Origin ist in der
+`isd`-CORS-Konfiguration bereits für die lokale Entwicklung freigegeben.
 
 ## Auth
 
@@ -43,6 +39,10 @@ angepasst werden müsste.
 Bei einer 401-Antwort von der API wird zentral ausgeloggt (Event-basiert,
 siehe `onUnauthorized` in `src/api/client.ts` + `AuthContext.tsx`), damit
 `api/client.ts` nicht direkt von `AuthContext` abhängen muss.
+Beim App-Start wird ein vorhandener Token mit `GET /auth/me` validiert. Das
+Abmelden ruft `POST /auth/logout` auf und leert anschließend den gesamten
+TanStack-Query-Cache, damit keine Daten zwischen Benutzerkonten bestehen
+bleiben.
 
 ## Struktur
 
@@ -64,8 +64,7 @@ src/
 - [x] Eigene Tickets — Liste (`GET /tickets`) + Detail (`GET /tickets/:id`)
 - [x] Ticket erstellen (`POST /tickets`)
 - [x] Kommentar hinzufügen (`POST /tickets/:id/comments`)
-- [x] Wissensdatenbank durchsuchen (`GET /kb/articles`, nur lesend,
-      Suche aktuell clientseitig gefiltert)
+- [x] Wissensdatenbank durchsuchen (`GET /kb/articles?search=...`, nur lesend)
 - [ ] Eigene Assets ansehen (`GET /assets`) — API-Funktion
       (`src/api/assets.ts`) existiert bereits, Seite/Route noch nicht
       verdrahtet (laut Brief niedrigere Priorität)
@@ -73,29 +72,25 @@ src/
 Bewusst nicht enthalten (siehe Brief): Datei-Anhänge, Status ändern,
 jede Art von Verwaltungsfunktion.
 
-## Wichtige Annahme, die noch zu verifizieren ist
+## Qualitätssicherung
 
-Die Typen in `src/types/index.ts` (z. B. Form der `/auth/login`-Response,
-Paginierungs-Hülle) sind aus dem Brief abgeleitet, nicht aus einer echten
-API-Response oder einem OpenAPI-Schema generiert — es lag keins vor. Vor dem
-ersten echten Request gegen die tatsächlichen Response-Shapes prüfen
-(Network-Tab) und anpassen. Falls `isd` ein OpenAPI/Swagger-Schema
-bereitstellt, lohnt es sich, diese Datei stattdessen z. B. per
-`openapi-typescript` zu generieren.
+```bash
+npm test
+npm run lint -- --deny-warnings
+npm run build
+npm audit --omit=dev --audit-level=high
+```
 
-## Bekannte, akzeptierte Punkte
-
-- `npm run lint` meldet eine Warnung zu `AuthContext.tsx`
-  (`react/only-export-components`, Fast-Refresh-Hinweis) — Standardmuster
-  bei Context+Hook in einer Datei, unkritisch.
-- `npm audit` zeigt eine offene `react-router`-Advisory (RSC-Mode-CSRF).
-  Betrifft nur den React-Router-RSC/Framework-Modus, den dieses Projekt
-  nicht verwendet (reine Client-SPA mit `<Routes>`).
+Die API-Vertragstests decken die Response-Hülle der Ticketdetails,
+Ticketanlage, Kommentare, KB-Suche sowie Session-Wiederherstellung und Logout
+ab. Dieselben Prüfungen laufen in GitHub Actions bei Pushes und Pull Requests.
+Ein OpenAPI-Schema mit generierten TypeScript-Typen bleibt der nächste Schritt,
+damit Backend und Portal langfristig eine gemeinsame Source of Truth haben.
 
 ## Nächste Schritte
 
-1. Gegen echte `isd`-Instanz testen, Typen in `src/types/index.ts`
-   verifizieren/anpassen
-2. Assets-Seite verdrahten (API-Funktion existiert bereits)
-3. Visuelles Design/Branding ist in diesem Grundgerüst bewusst neutral
+1. OpenAPI-Schema im Backend einführen und TypeScript-Typen generieren
+2. Einen Browser-Smoke-Test gegen den gemeinsamen Docker-Stack ergänzen
+3. Assets-Seite verdrahten (API-Funktion existiert bereits)
+4. Visuelles Design/Branding ist in diesem Grundgerüst bewusst neutral
    gehalten — eigener Schritt, sobald die Feature-Basis steht

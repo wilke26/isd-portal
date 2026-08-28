@@ -1,5 +1,5 @@
-import { config } from '../lib/config';
-import { tokenStorage } from '../lib/tokenStorage';
+import { config } from '../lib/config.ts';
+import { tokenStorage } from '../lib/tokenStorage.ts';
 
 /**
  * Wird geworfen, wenn die API mit einem Fehlerstatus antwortet.

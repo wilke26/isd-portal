@@ -45,7 +45,7 @@ export function TicketDetailPage() {
         ← Zurück zu Tickets
       </Link>
 
-      <h1 className="mb-1 text-xl font-semibold text-slate-900">{ticket.subject}</h1>
+      <h1 className="mb-1 text-xl font-semibold text-slate-900">{ticket.title}</h1>
       <p className="mb-6 whitespace-pre-wrap text-sm text-slate-600">{ticket.description}</p>
 
       <h2 className="mb-3 text-sm font-semibold text-slate-900">Kommentare</h2>
@@ -55,7 +55,7 @@ export function TicketDetailPage() {
         )}
         {ticket.comments.map((comment) => (
           <li key={comment.id} className="rounded-md border border-slate-200 bg-white px-4 py-3">
-            <div className="mb-1 text-xs font-medium text-slate-500">{comment.author.name}</div>
+            <div className="mb-1 text-xs font-medium text-slate-500">{comment.user.name}</div>
             <p className="text-sm text-slate-700">{comment.body}</p>
           </li>
         ))}
