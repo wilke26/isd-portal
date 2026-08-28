@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { listArticles } from '../api/kb';
 import { LoadingState, ErrorState } from '../components/QueryState';
@@ -7,22 +7,9 @@ export function KnowledgeBasePage() {
   const [search, setSearch] = useState('');
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['kb-articles'],
-    queryFn: listArticles,
+    queryKey: ['kb-articles', search],
+    queryFn: () => listArticles(search),
   });
-
-  // Clientseitiger Filter für den MVP. Falls die Artikelmenge wächst,
-  // eher auf einen serverseitigen Suchparameter (z. B. GET /kb/articles?q=)
-  // umstellen, sobald der real existiert.
-  const filtered = useMemo(() => {
-    if (!data) return [];
-    const term = search.trim().toLowerCase();
-    if (!term) return data.data;
-    return data.data.filter(
-      (article) =>
-        article.title.toLowerCase().includes(term) || article.excerpt.toLowerCase().includes(term),
-    );
-  }, [data, search]);
 
   return (
     <div>
@@ -41,15 +28,15 @@ export function KnowledgeBasePage() {
         <ErrorState message={error instanceof Error ? error.message : 'Artikel konnten nicht geladen werden.'} />
       )}
 
-      {data && filtered.length === 0 && (
+      {data && data.data.length === 0 && (
         <p className="text-sm text-slate-500">Keine Artikel gefunden.</p>
       )}
 
       <ul className="space-y-3">
-        {filtered.map((article) => (
+        {data?.data.map((article) => (
           <li key={article.id} className="rounded-md border border-slate-200 bg-white px-4 py-3">
             <h2 className="text-sm font-semibold text-slate-900">{article.title}</h2>
-            <p className="mt-1 text-sm text-slate-600">{article.excerpt}</p>
+            <p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{article.body}</p>
           </li>
         ))}
       </ul>

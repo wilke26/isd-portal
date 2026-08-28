@@ -8,7 +8,7 @@ export function NewTicketPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [subject, setSubject] = useState('');
+  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
 
   const mutation = useMutation({
@@ -21,7 +21,7 @@ export function NewTicketPage() {
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
-    mutation.mutate({ subject, description });
+    mutation.mutate({ title, description });
   };
 
   return (
@@ -30,14 +30,14 @@ export function NewTicketPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="subject" className="mb-1 block text-sm font-medium text-slate-700">
+          <label htmlFor="title" className="mb-1 block text-sm font-medium text-slate-700">
             Betreff
           </label>
           <input
-            id="subject"
+            id="title"
             required
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
           />
         </div>

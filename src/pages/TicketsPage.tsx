@@ -2,15 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { listTickets } from '../api/tickets';
 import { LoadingState, ErrorState } from '../components/QueryState';
-import type { TicketStatus } from '../types';
-
-const statusLabels: Record<TicketStatus, string> = {
-  open: 'Offen',
-  in_progress: 'In Bearbeitung',
-  waiting: 'Wartet',
-  resolved: 'Gelöst',
-  closed: 'Geschlossen',
-};
 
 export function TicketsPage() {
   const { data, isLoading, isError, error } = useQuery({
@@ -45,8 +36,8 @@ export function TicketsPage() {
                 to={`/tickets/${ticket.id}`}
                 className="flex items-center justify-between px-4 py-3 hover:bg-slate-50"
               >
-                <span className="text-sm font-medium text-slate-900">{ticket.subject}</span>
-                <span className="text-xs text-slate-500">{statusLabels[ticket.status]}</span>
+                <span className="text-sm font-medium text-slate-900">{ticket.title}</span>
+                <span className="text-xs text-slate-500">{ticket.status.label}</span>
               </Link>
             </li>
           ))}

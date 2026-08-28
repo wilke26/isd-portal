@@ -1,69 +1,78 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import * as authApi from '../api/auth';
 import { onUnauthorized } from '../api/client';
 import { tokenStorage } from '../lib/tokenStorage';
 import type { User } from '../types';
-
-interface AuthContextValue {
-  user: User | null;
-  isAuthenticated: boolean;
-  /** true während der App-Start prüft, ob bereits ein Token vorliegt. */
-  isInitializing: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-}
-
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+import { AuthContext, type AuthContextValue } from './auth-context';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
-  // Beim App-Start: Token evtl. vorhanden, aber User-Objekt noch nicht bekannt.
-  // Für den MVP reicht "Token vorhanden = eingeloggt"; der User wird erst nach
-  // einem echten Login gesetzt. Optional später: GET /auth/me nachrüsten, um
-  // den User-State auch nach einem Seiten-Reload wiederherzustellen.
-  useEffect(() => {
-    setIsInitializing(false);
-  }, []);
-
-  useEffect(() => {
-    return onUnauthorized(() => {
-      tokenStorage.clear();
-      setUser(null);
-    });
-  }, []);
-
-  const login = async (email: string, password: string) => {
-    const response = await authApi.login(email, password);
-    tokenStorage.set(response.token);
-    setUser(response.user);
-  };
-
-  const logout = () => {
+  const clearSession = useCallback(() => {
     tokenStorage.clear();
     setUser(null);
-  };
+    queryClient.clear();
+  }, [queryClient]);
+
+  // A stored token is not treated as proof of a valid session. Restore the
+  // authenticated user from the backend before rendering protected routes.
+  useEffect(() => {
+    let cancelled = false;
+
+    const restoreSession = async () => {
+      if (!tokenStorage.get()) {
+        setIsInitializing(false);
+        return;
+      }
+
+      try {
+        const currentUser = await authApi.me();
+        if (!cancelled) setUser(currentUser);
+      } catch {
+        if (!cancelled) clearSession();
+      } finally {
+        if (!cancelled) setIsInitializing(false);
+      }
+    };
+
+    void restoreSession();
+    return () => {
+      cancelled = true;
+    };
+  }, [clearSession]);
+
+  useEffect(() => {
+    return onUnauthorized(clearSession);
+  }, [clearSession]);
+
+  const login = useCallback(async (email: string, password: string) => {
+    const response = await authApi.login(email, password);
+    queryClient.clear();
+    tokenStorage.set(response.token);
+    setUser(response.user);
+  }, [queryClient]);
+
+  const logout = useCallback(async () => {
+    try {
+      if (tokenStorage.get()) await authApi.logout();
+    } finally {
+      clearSession();
+    }
+  }, [clearSession]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
-      isAuthenticated: Boolean(tokenStorage.get()),
+      isAuthenticated: Boolean(user && tokenStorage.get()),
       isInitializing,
       login,
       logout,
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user, isInitializing],
+    [user, isInitializing, login, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error('useAuth muss innerhalb von <AuthProvider> verwendet werden');
-  }
-  return ctx;
 }
