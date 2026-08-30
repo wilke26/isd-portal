@@ -1,5 +1,20 @@
 # isd-portal
 
+## API contract
+
+`openapi/portal-v1.json` is a vendored copy of the backend-owned OpenAPI 3.1
+contract. TypeScript models in `src/types/generated/portal-v1.ts` are generated
+from that document and must not be edited manually.
+
+```bash
+npm run api:generate
+npm run api:check
+```
+
+CI fails when the checked-in generated types are out of date. When the backend
+contract changes, update the vendored schema first, regenerate the types, and
+commit both files together.
+
 Self-Service-Portal für Requester, das gegen die bestehende `isd`-REST-API
 (`/api/v1`) spricht. Kein eigenes Backend, keine eigene Datenhaltung — siehe
 Projekt-Brief für Hintergrund und Entscheidungen.

@@ -67,10 +67,11 @@ test('ticket detail unwraps the Laravel resource envelope', async () => {
 });
 
 test('ticket creation sends the backend title field', async () => {
-  responseBody = { id: 7, title: 'Laptop startet nicht' };
+  responseBody = { data: { id: 7, title: 'Laptop startet nicht' } };
 
-  await createTicket({ title: 'Laptop startet nicht', description: 'Seit heute.' });
+  const ticket = await createTicket({ title: 'Laptop startet nicht', description: 'Seit heute.' });
 
+  assert.equal(ticket.id, 7);
   assert.equal(requests[0]?.init?.method, 'POST');
   assert.deepEqual(JSON.parse(String(requests[0]?.init?.body)), {
     title: 'Laptop startet nicht',

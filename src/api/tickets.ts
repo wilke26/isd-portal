@@ -11,8 +11,9 @@ export async function getTicket(id: number): Promise<TicketDetail> {
   return response.data;
 }
 
-export function createTicket(input: CreateTicketInput): Promise<Ticket> {
-  return apiFetch<Ticket>('/tickets', { method: 'POST', body: input });
+export async function createTicket(input: CreateTicketInput): Promise<Ticket> {
+  const response = await apiFetch<ApiResource<Ticket>>('/tickets', { method: 'POST', body: input });
+  return response.data;
 }
 
 export function addComment(ticketId: number, body: string): Promise<ApiMessage> {
