@@ -33,6 +33,20 @@ export function onUnauthorized(handler: () => void): () => void {
   return () => window.removeEventListener(UNAUTHORIZED_EVENT, listener);
 }
 
+function publicErrorMessage(status: number, payload: unknown): string {
+  // Authorization and model-resolution messages may contain implementation
+  // details. Keep the portal response useful without reflecting backend
+  // class names or revealing whether an inaccessible resource exists.
+  if (status === 403) return 'Für diese Aktion fehlt die Berechtigung.';
+  if (status === 404) return 'Die angeforderte Ressource wurde nicht gefunden.';
+
+  return (
+    (payload && typeof payload === 'object' && 'message' in payload
+      ? String((payload as { message?: unknown }).message)
+      : undefined) ?? `Anfrage fehlgeschlagen (${status})`
+  );
+}
+
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
@@ -75,11 +89,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   const payload = isJson ? await response.json().catch(() => null) : null;
 
   if (!response.ok) {
-    const message =
-      (payload && typeof payload === 'object' && 'message' in payload
-        ? String((payload as { message?: unknown }).message)
-        : undefined) ?? `Anfrage fehlgeschlagen (${response.status})`;
-    throw new ApiError(response.status, message, payload);
+    throw new ApiError(response.status, publicErrorMessage(response.status, payload), payload);
   }
 
   return payload as T;
