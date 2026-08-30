@@ -143,6 +143,12 @@ Vor dem Lauf wird außerdem sichergestellt, dass die vendorte OpenAPI-Datei mit
 dem Backend-Vertrag identisch ist. Alle Prüfungen laufen bei Pushes und Pull
 Requests.
 
+Da `isd` ein privates, separates Repository ist, benötigt dieser CI-Job das
+Repository-Secret `ISD_BACKEND_READ_TOKEN`. Hinterlegt wird ein Fine-grained
+Personal Access Token, das ausschließlich für `wilke26/isd` gilt und dort nur
+die Repository-Berechtigung **Contents: Read-only** besitzt. Der Checkout
+speichert das Token nicht in der lokalen Git-Konfiguration des Runners.
+
 ## Nächste Schritte
 
 1. Assets-Seite verdrahten (API-Funktion existiert bereits)
