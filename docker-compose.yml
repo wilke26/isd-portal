@@ -1,0 +1,21 @@
+name: isd-portal
+
+services:
+  portal:
+    build:
+      context: .
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-https://isd.local/api/v1}
+    image: isd-portal:local
+    environment:
+      PORTAL_API_ORIGIN: ${PORTAL_API_ORIGIN:-https://isd.local}
+    ports:
+      - "127.0.0.1:8080:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped

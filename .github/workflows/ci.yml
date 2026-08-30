@@ -48,6 +48,60 @@ jobs:
       - name: Run requester browser smoke test
         run: npm run test:e2e
 
+      - name: Build and verify hardened production image
+        run: |
+          docker build \
+            --build-arg VITE_API_BASE_URL=https://api.example.test/api/v1 \
+            --tag isd-portal:ci .
+
+          cleanup() {
+            status=$?
+            if [ "$status" -ne 0 ]; then
+              docker logs isd-portal-ci >&2 || true
+            fi
+            docker rm --force isd-portal-ci >/dev/null 2>&1 || true
+            exit "$status"
+          }
+          trap cleanup EXIT
+
+          docker run --detach \
+            --name isd-portal-ci \
+            --publish 127.0.0.1:8080:8080 \
+            --env PORTAL_API_ORIGIN=https://api.example.test \
+            --read-only \
+            --tmpfs /tmp \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            isd-portal:ci
+
+          ready=false
+          for attempt in {1..20}; do
+            if [ "$(docker inspect --format '{{.State.Running}}' isd-portal-ci)" != "true" ]; then
+              exit 1
+            fi
+            if curl --fail --silent http://127.0.0.1:8080/healthz >/dev/null; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" != true ]; then
+            exit 1
+          fi
+
+          curl --fail --silent --dump-header /tmp/portal-headers \
+            --output /tmp/portal-body http://127.0.0.1:8080/tickets
+          grep --fixed-strings --ignore-case \
+            "content-security-policy: default-src 'self';" /tmp/portal-headers
+          grep --fixed-strings --ignore-case \
+            "connect-src 'self' https://api.example.test;" /tmp/portal-headers
+          grep --fixed-strings --ignore-case \
+            "x-content-type-options: nosniff" /tmp/portal-headers
+          grep --fixed-strings --ignore-case \
+            "x-frame-options: DENY" /tmp/portal-headers
+          grep --fixed-strings '<div id="root"></div>' /tmp/portal-body
+          PLAYWRIGHT_BASE_URL=http://127.0.0.1:8080 npm run test:e2e
+
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
