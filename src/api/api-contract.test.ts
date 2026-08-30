@@ -1,39 +1,8 @@
 import assert from 'node:assert/strict';
-import { afterEach, beforeEach, test } from 'node:test';
+import { afterEach, beforeEach, test } from 'vitest';
 import { logout, me } from './auth.ts';
 import { listArticles } from './kb.ts';
 import { addComment, createTicket, getTicket } from './tickets.ts';
-
-class MemoryStorage implements Storage {
-  readonly #values = new Map<string, string>();
-
-  get length(): number {
-    return this.#values.size;
-  }
-
-  clear(): void {
-    this.#values.clear();
-  }
-
-  getItem(key: string): string | null {
-    return this.#values.get(key) ?? null;
-  }
-
-  key(index: number): string | null {
-    return [...this.#values.keys()][index] ?? null;
-  }
-
-  removeItem(key: string): void {
-    this.#values.delete(key);
-  }
-
-  setItem(key: string, value: string): void {
-    this.#values.set(key, value);
-  }
-}
-
-const storage = new MemoryStorage();
-Object.defineProperty(globalThis, 'localStorage', { value: storage });
 
 let requests: Array<{ url: string; init?: RequestInit }> = [];
 let responseBody: unknown;
@@ -41,7 +10,7 @@ let responseBody: unknown;
 beforeEach(() => {
   requests = [];
   responseBody = {};
-  storage.clear();
+  localStorage.clear();
 
   globalThis.fetch = async (input, init) => {
     requests.push({ url: String(input), init });
@@ -53,7 +22,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  storage.clear();
+  localStorage.clear();
 });
 
 test('ticket detail unwraps the Laravel resource envelope', async () => {
@@ -100,7 +69,7 @@ test('knowledge-base search uses the backend search parameter', async () => {
 });
 
 test('session restore and logout authenticate against the backend', async () => {
-  storage.setItem('isd_portal_token', 'secret-token');
+  localStorage.setItem('isd_portal_token', 'secret-token');
   responseBody = { id: 3, name: 'Ada', email: 'ada@example.test' };
 
   const user = await me();
