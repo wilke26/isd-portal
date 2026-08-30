@@ -1,7 +1,11 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { describe, expect, test } from 'vitest';
 import { renderApp } from './test/renderApp';
+import { server } from './test/server';
+
+const api = 'https://isd.local/api/v1';
 
 describe('requester portal flow', () => {
   test('redirects unauthenticated users and completes login', async () => {
@@ -31,5 +35,36 @@ describe('requester portal flow', () => {
     await user.click(screen.getByRole('button', { name: 'Abmelden' }));
     expect(await screen.findByRole('button', { name: 'Anmelden' })).toBeInTheDocument();
     expect(localStorage.getItem('isd_portal_token')).toBeNull();
+  });
+
+  test('clears an expired session when a protected API request returns 401', async () => {
+    localStorage.setItem('isd_portal_token', 'expired-token');
+    server.use(
+      http.get(`${api}/tickets`, () =>
+        HttpResponse.json({ message: 'Unauthenticated.' }, { status: 401 }),
+      ),
+    );
+
+    renderApp(['/tickets']);
+
+    expect(await screen.findByRole('button', { name: 'Anmelden' })).toBeInTheDocument();
+    expect(localStorage.getItem('isd_portal_token')).toBeNull();
+  });
+
+  test('does not expose backend details for an inaccessible resource', async () => {
+    localStorage.setItem('isd_portal_token', 'existing-token');
+    server.use(
+      http.get(`${api}/tickets/999`, () =>
+        HttpResponse.json(
+          { message: 'No query results for model [App\\Models\\Ticket] 999' },
+          { status: 404 },
+        ),
+      ),
+    );
+
+    renderApp(['/tickets/999']);
+
+    expect(await screen.findByText('Die angeforderte Ressource wurde nicht gefunden.')).toBeInTheDocument();
+    expect(screen.queryByText(/App\\Models\\Ticket/)).not.toBeInTheDocument();
   });
 });
