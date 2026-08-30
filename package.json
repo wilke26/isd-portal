@@ -8,6 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "test": "node --test src/api/api-contract.test.ts",
+    "api:generate": "npm_config_cache=.npm-cache npx --yes openapi-typescript@7.13.0 openapi/portal-v1.json -o src/types/generated/portal-v1.ts",
+    "api:check": "npm run api:generate && git diff --exit-code -- src/types/generated/portal-v1.ts",
     "preview": "vite preview"
   },
   "dependencies": {

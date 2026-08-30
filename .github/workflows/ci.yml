@@ -30,6 +30,9 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+      - name: Verify generated API types are current
+        run: npm run api:check
+
       - name: Type-check and production build
         run: npm run build
 
