@@ -93,19 +93,21 @@ jede Art von Verwaltungsfunktion.
 npm test
 npm run lint -- --deny-warnings
 npm run build
+npx playwright install chromium
+npm run test:e2e
 npm audit --omit=dev --audit-level=high
 ```
 
-Die API-Vertragstests decken die Response-Hülle der Ticketdetails,
-Ticketanlage, Kommentare, KB-Suche sowie Session-Wiederherstellung und Logout
-ab. Dieselben Prüfungen laufen in GitHub Actions bei Pushes und Pull Requests.
-Ein OpenAPI-Schema mit generierten TypeScript-Typen bleibt der nächste Schritt,
-damit Backend und Portal langfristig eine gemeinsame Source of Truth haben.
+Vitest, Testing Library und MSW decken API-Verträge, Login, Session-
+Wiederherstellung, Ticketliste, Ticketanlage und Logout ab. Playwright prüft
+denselben Requester-Ablauf zusätzlich in einem echten Chromium-Browser. Die
+Browser-API wird dabei deterministisch geroutet; ein gemeinsamer E2E-Lauf gegen
+den echten Docker-Stack bleibt eine separate Integrationsstufe. Alle Prüfungen
+laufen in GitHub Actions bei Pushes und Pull Requests.
 
 ## Nächste Schritte
 
-1. OpenAPI-Schema im Backend einführen und TypeScript-Typen generieren
-2. Einen Browser-Smoke-Test gegen den gemeinsamen Docker-Stack ergänzen
-3. Assets-Seite verdrahten (API-Funktion existiert bereits)
-4. Visuelles Design/Branding ist in diesem Grundgerüst bewusst neutral
+1. Gemeinsamen E2E-Lauf gegen den echten Backend-/Portal-Docker-Stack ergänzen
+2. Assets-Seite verdrahten (API-Funktion existiert bereits)
+3. Visuelles Design/Branding ist in diesem Grundgerüst bewusst neutral
    gehalten — eigener Schritt, sobald die Feature-Basis steht
