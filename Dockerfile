@@ -14,7 +14,8 @@ RUN npm run build
 
 FROM caddy:2.11.4-alpine AS runtime
 
-RUN addgroup -S portal \
+RUN setcap -r /usr/bin/caddy \
+    && addgroup -S portal \
     && adduser -S -G portal portal \
     && chown -R portal:portal /srv
 

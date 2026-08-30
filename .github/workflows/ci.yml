@@ -53,7 +53,18 @@ jobs:
           docker build \
             --build-arg VITE_API_BASE_URL=https://api.example.test/api/v1 \
             --tag isd-portal:ci .
-          docker run --detach --rm \
+
+          cleanup() {
+            status=$?
+            if [ "$status" -ne 0 ]; then
+              docker logs isd-portal-ci >&2 || true
+            fi
+            docker rm --force isd-portal-ci >/dev/null 2>&1 || true
+            exit "$status"
+          }
+          trap cleanup EXIT
+
+          docker run --detach \
             --name isd-portal-ci \
             --publish 127.0.0.1:8080:8080 \
             --env PORTAL_API_ORIGIN=https://api.example.test \
@@ -62,14 +73,21 @@ jobs:
             --cap-drop ALL \
             --security-opt no-new-privileges \
             isd-portal:ci
-          trap 'docker stop isd-portal-ci' EXIT
 
+          ready=false
           for attempt in {1..20}; do
+            if [ "$(docker inspect --format '{{.State.Running}}' isd-portal-ci)" != "true" ]; then
+              exit 1
+            fi
             if curl --fail --silent http://127.0.0.1:8080/healthz >/dev/null; then
+              ready=true
               break
             fi
             sleep 1
           done
+          if [ "$ready" != true ]; then
+            exit 1
+          fi
 
           curl --fail --silent --dump-header /tmp/portal-headers \
             --output /tmp/portal-body http://127.0.0.1:8080/tickets
