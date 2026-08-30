@@ -113,3 +113,166 @@ jobs:
 
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
+
+  full-stack-e2e:
+    name: Full-stack E2E (Portal / Laravel / MySQL)
+    runs-on: ubuntu-latest
+    needs: quality
+    timeout-minutes: 20
+    steps:
+      - name: Checkout portal
+        uses: actions/checkout@v4
+        with:
+          path: portal
+          persist-credentials: false
+
+      - name: Verify backend checkout credential is configured
+        env:
+          BACKEND_READ_TOKEN: ${{ secrets.ISD_BACKEND_READ_TOKEN }}
+        run: |
+          if [ -z "$BACKEND_READ_TOKEN" ]; then
+            echo "::error::Repository secret ISD_BACKEND_READ_TOKEN is required to read the private wilke26/isd repository."
+            exit 1
+          fi
+
+      - name: Checkout backend
+        uses: actions/checkout@v4
+        with:
+          repository: wilke26/isd
+          ref: main
+          path: isd
+          token: ${{ secrets.ISD_BACKEND_READ_TOKEN }}
+          persist-credentials: false
+
+      - name: Verify the vendored API contract matches the backend
+        run: cmp portal/openapi/portal-v1.json isd/openapi/portal-v1.json
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: portal/package-lock.json
+
+      - name: Install portal dependencies and browser
+        working-directory: portal
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Configure backend for the integration environment
+        working-directory: isd
+        run: |
+          cp .env.example .env
+
+          set_env_var() {
+            local key="$1" value="$2"
+            if grep -qE "^#?[[:space:]]*${key}=" .env; then
+              sed -i -E "s|^#?[[:space:]]*${key}=.*|${key}=${value}|" .env
+            else
+              echo "${key}=${value}" >> .env
+            fi
+          }
+
+          set_env_var APP_URL http://127.0.0.1
+          set_env_var CORS_ALLOWED_ORIGINS http://127.0.0.1:8080
+          set_env_var DB_CONNECTION mysql
+          set_env_var DB_HOST mysql
+          set_env_var DB_PORT 3306
+          set_env_var DB_DATABASE it_service_desk
+          set_env_var DB_USERNAME isd_user
+          set_env_var DB_PASSWORD secret
+          set_env_var REDIS_HOST redis
+          set_env_var CACHE_STORE redis
+          set_env_var QUEUE_CONNECTION redis
+          set_env_var SESSION_DRIVER redis
+
+          cp .env.docker.example .env.docker
+          echo "UID=1000" >> .env.docker
+          echo "GID=1000" >> .env.docker
+
+      - name: Build and start backend dependencies
+        working-directory: isd
+        run: |
+          sudo chown -R 1000:1000 .
+          docker compose --env-file .env.docker \
+            -f docker-compose.yml -f docker-compose.ci.yml build app
+          docker compose --env-file .env.docker \
+            -f docker-compose.yml -f docker-compose.ci.yml up -d mysql redis
+
+      - name: Install backend and seed the database
+        working-directory: isd
+        run: |
+          compose() {
+            docker compose --env-file .env.docker \
+              -f docker-compose.yml -f docker-compose.ci.yml "$@"
+          }
+          compose run --rm app composer install --no-interaction --prefer-dist --optimize-autoloader
+          compose run --rm app php artisan key:generate
+          compose run --rm app php artisan migrate --seed --force
+          compose up -d app
+
+          ready=false
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1/up >/dev/null; then
+              ready=true
+              break
+            fi
+            sleep 2
+          done
+          test "$ready" = true
+
+      - name: Build and start portal production container
+        working-directory: portal
+        run: |
+          docker build \
+            --build-arg VITE_API_BASE_URL=http://127.0.0.1/api/v1 \
+            --tag isd-portal:full-stack .
+          docker run --detach \
+            --name isd-portal-full-stack \
+            --publish 127.0.0.1:8080:8080 \
+            --env PORTAL_API_ORIGIN=http://127.0.0.1 \
+            --read-only \
+            --tmpfs /tmp \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            isd-portal:full-stack
+
+          ready=false
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:8080/healthz >/dev/null; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          test "$ready" = true
+
+      - name: Run browser flow against the real stack
+        working-directory: portal
+        env:
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:8080
+        run: npm run test:e2e:full-stack
+
+      - name: Upload full-stack Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-stack-playwright-report
+          path: portal/playwright-report/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Show service logs on failure
+        if: failure()
+        run: |
+          docker logs isd-portal-full-stack || true
+          docker compose --env-file isd/.env.docker \
+            -f isd/docker-compose.yml -f isd/docker-compose.ci.yml logs || true
+
+      - name: Tear down integration environment
+        if: always()
+        run: |
+          docker rm --force isd-portal-full-stack >/dev/null 2>&1 || true
+          docker compose --env-file isd/.env.docker \
+            -f isd/docker-compose.yml -f isd/docker-compose.ci.yml down -v || true

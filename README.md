@@ -124,6 +124,7 @@ npm run lint -- --deny-warnings
 npm run build
 npx playwright install chromium
 npm run test:e2e
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:8080 npm run test:e2e:full-stack
 npm audit --omit=dev --audit-level=high
 ```
 
@@ -135,13 +136,21 @@ unter der ausgelieferten CSP funktioniert.
 Vitest, Testing Library und MSW decken API-Verträge, Login, Session-
 Wiederherstellung, Ticketliste, Ticketanlage und Logout ab. Playwright prüft
 denselben Requester-Ablauf zusätzlich in einem echten Chromium-Browser. Die
-Browser-API wird dabei deterministisch geroutet; ein gemeinsamer E2E-Lauf gegen
-den echten Docker-Stack bleibt eine separate Integrationsstufe. Alle Prüfungen
-laufen in GitHub Actions bei Pushes und Pull Requests.
+Browser-API wird dabei deterministisch geroutet. Ein separater CI-Job checkt
+zusätzlich den aktuellen Backend-Stand aus und prüft Login, Ticketanlage,
+Persistenz nach einem Reload und Logout gegen die echte Laravel-API und MySQL.
+Vor dem Lauf wird außerdem sichergestellt, dass die vendorte OpenAPI-Datei mit
+dem Backend-Vertrag identisch ist. Alle Prüfungen laufen bei Pushes und Pull
+Requests.
+
+Da `isd` ein privates, separates Repository ist, benötigt dieser CI-Job das
+Repository-Secret `ISD_BACKEND_READ_TOKEN`. Hinterlegt wird ein Fine-grained
+Personal Access Token, das ausschließlich für `wilke26/isd` gilt und dort nur
+die Repository-Berechtigung **Contents: Read-only** besitzt. Der Checkout
+speichert das Token nicht in der lokalen Git-Konfiguration des Runners.
 
 ## Nächste Schritte
 
-1. Gemeinsamen E2E-Lauf gegen den echten Backend-/Portal-Docker-Stack ergänzen
-2. Assets-Seite verdrahten (API-Funktion existiert bereits)
-3. Visuelles Design/Branding ist in diesem Grundgerüst bewusst neutral
+1. Assets-Seite verdrahten (API-Funktion existiert bereits)
+2. Visuelles Design/Branding ist in diesem Grundgerüst bewusst neutral
    gehalten — eigener Schritt, sobald die Feature-Basis steht
