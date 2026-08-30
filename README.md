@@ -42,6 +42,35 @@ npm run dev
 Läuft dann auf `http://localhost:5173`. Dieser Origin ist in der
 `isd`-CORS-Konfiguration bereits für die lokale Entwicklung freigegeben.
 
+## Produktionscontainer und Browser-Sicherheit
+
+Das Repository enthält einen Multi-Stage-Produktionsbuild. Node erzeugt die
+statischen Dateien; ein unprivilegierter Caddy-Prozess liefert sie anschließend
+mit einer restriktiven Content Security Policy und zusätzlichen Browser-
+Sicherheitsheadern aus.
+
+```bash
+cp .env.example .env
+docker compose up --build -d
+curl -I http://127.0.0.1:8080
+```
+
+Das Portal ist danach unter `http://127.0.0.1:8080` erreichbar. Für ein echtes
+Deployment müssen zwei zusammengehörige Werte gesetzt werden:
+
+- `VITE_API_BASE_URL`: vollständige, beim Build in das JavaScript eingebettete
+  API-Basis-URL, beispielsweise `https://api.example.com/api/v1`
+- `PORTAL_API_ORIGIN`: reine Origin desselben Ziels für CSP `connect-src`,
+  beispielsweise `https://api.example.com`
+
+Im Backend muss die öffentlich ausgelieferte Portal-Origin gleichzeitig in
+`CORS_ALLOWED_ORIGINS` stehen. Die Allowlist darf nicht durch `*` ersetzt
+werden. Der Produktions-CSP erlaubt ausschließlich eigene Skripte und Styles,
+verbietet Plugins und Framing und beschränkt Netzwerkzugriffe auf die explizite
+API-Origin. Externe Fonts, Analytics oder weitere Ziele müssen bewusst in
+`docker/Caddyfile` ergänzt und anschließend im Header-Smoke-Test abgesichert
+werden.
+
 ## Auth
 
 Token-basiert (Sanctum Bearer-Token), konsistent mit dem Rest der API — kein
@@ -97,6 +126,11 @@ npx playwright install chromium
 npm run test:e2e
 npm audit --omit=dev --audit-level=high
 ```
+
+Mit `PLAYWRIGHT_BASE_URL=http://127.0.0.1:8080 npm run test:e2e` kann derselbe
+Browser-Test gegen einen bereits laufenden Produktionscontainer ausgeführt
+werden. In CI wird genau dieser Pfad genutzt, damit der Requester-Flow auch
+unter der ausgelieferten CSP funktioniert.
 
 Vitest, Testing Library und MSW decken API-Verträge, Login, Session-
 Wiederherstellung, Ticketliste, Ticketanlage und Logout ab. Playwright prüft
