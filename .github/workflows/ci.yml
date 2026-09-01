@@ -103,6 +103,8 @@ jobs:
           grep --fixed-strings --ignore-case \
             "x-frame-options: DENY" /tmp/portal-headers
           grep --fixed-strings '<div id="root"></div>' /tmp/portal-body
+          test "$(curl --silent --output /tmp/missing-asset \
+            --write-out '%{http_code}' http://127.0.0.1:8080/assets/missing.js)" = "404"
           PLAYWRIGHT_BASE_URL=http://127.0.0.1:8080 npm run test:e2e
 
       - name: Upload Playwright report

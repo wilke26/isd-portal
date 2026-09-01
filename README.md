@@ -147,7 +147,11 @@ Die Seitenrouten werden als separate JavaScript-Chunks ausgeliefert und erst
 beim Aufruf geladen. `npm run bundle:check` wertet das Vite-Manifest aus und
 stellt sicher, dass alle sechs Seiten dynamisch bleiben, das initial geladene
 JavaScript komprimiert höchstens 90 KiB umfasst und kein einzelner Seiten-Chunk
-15 KiB überschreitet. Diese Prüfung läuft nach dem Produktions-Build auch in CI.
+einschließlich seiner zusätzlichen Shared-Chunks 15 KiB überschreitet. Diese
+Prüfung läuft nach dem Produktions-Build auch in CI. Falls ein bereits geöffneter
+Client nach einem Deployment noch einen veralteten Chunk anfordert, lädt das
+Portal einmalig die aktuelle Anwendung und zeigt bei einem erneuten Fehler eine
+stabile Wiederherstellungsseite. Fehlende Asset-Dateien liefern dabei `404`.
 
 Da `isd` ein privates, separates Repository ist, benötigt dieser CI-Job das
 Repository-Secret `ISD_BACKEND_READ_TOKEN`. Hinterlegt wird ein Fine-grained

@@ -48,16 +48,28 @@ async function gzipSize(file) {
   return gzipSync(contents).byteLength;
 }
 
+function javascriptChunks(keys) {
+  return [...new Map(
+    [...keys]
+      .map((key) => manifest[key])
+      .filter((chunk) => chunk.file.endsWith('.js'))
+      .map((chunk) => [chunk.file, chunk]),
+  ).values()];
+}
+
+async function totalGzipSize(chunks) {
+  return (
+    await Promise.all(chunks.map((chunk) => gzipSize(chunk.file)))
+  ).reduce((total, size) => total + size, 0);
+}
+
 function kib(bytes) {
   return `${(bytes / 1024).toFixed(2)} KiB`;
 }
 
-const initialChunks = [...collectStaticImports(entryKey)]
-  .map((key) => manifest[key])
-  .filter((chunk) => chunk.file.endsWith('.js'));
-const initialGzipSize = (
-  await Promise.all(initialChunks.map((chunk) => gzipSize(chunk.file)))
-).reduce((total, size) => total + size, 0);
+const initialChunkKeys = collectStaticImports(entryKey);
+const initialChunks = javascriptChunks(initialChunkKeys);
+const initialGzipSize = await totalGzipSize(initialChunks);
 
 console.log(`Initial JavaScript: ${kib(initialGzipSize)} / ${kib(initialGzipLimit)}`);
 
@@ -74,7 +86,11 @@ for (const routeKey of expectedRoutes) {
     throw new Error(`${routeKey} must remain a dynamically imported route.`);
   }
 
-  const size = await gzipSize(route.file);
+  const routeChunkKeys = collectStaticImports(routeKey);
+  const additionalRouteChunks = javascriptChunks(
+    new Set([...routeChunkKeys].filter((key) => !initialChunkKeys.has(key))),
+  );
+  const size = await totalGzipSize(additionalRouteChunks);
   console.log(`${routeKey}: ${kib(size)} / ${kib(routeGzipLimit)}`);
 
   if (size > routeGzipLimit) {

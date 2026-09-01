@@ -2,27 +2,43 @@ import { lazy, Suspense } from 'react';
 import type { ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
+import { LazyRouteErrorBoundary } from './components/LazyRouteErrorBoundary';
+import { loadLazyRouteModule } from './lib/lazyRouteRecovery';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 
 const LoginPage = lazy(() =>
-  import('./pages/LoginPage').then(({ LoginPage }) => ({ default: LoginPage })),
+  loadLazyRouteModule(() =>
+    import('./pages/LoginPage').then(({ LoginPage }) => ({ default: LoginPage })),
+  ),
 );
 const TicketsPage = lazy(() =>
-  import('./pages/TicketsPage').then(({ TicketsPage }) => ({ default: TicketsPage })),
+  loadLazyRouteModule(() =>
+    import('./pages/TicketsPage').then(({ TicketsPage }) => ({ default: TicketsPage })),
+  ),
 );
 const NewTicketPage = lazy(() =>
-  import('./pages/NewTicketPage').then(({ NewTicketPage }) => ({ default: NewTicketPage })),
+  loadLazyRouteModule(() =>
+    import('./pages/NewTicketPage').then(({ NewTicketPage }) => ({ default: NewTicketPage })),
+  ),
 );
 const TicketDetailPage = lazy(() =>
-  import('./pages/TicketDetailPage').then(({ TicketDetailPage }) => ({ default: TicketDetailPage })),
+  loadLazyRouteModule(() =>
+    import('./pages/TicketDetailPage').then(({ TicketDetailPage }) => ({
+      default: TicketDetailPage,
+    })),
+  ),
 );
 const KnowledgeBasePage = lazy(() =>
-  import('./pages/KnowledgeBasePage').then(({ KnowledgeBasePage }) => ({
-    default: KnowledgeBasePage,
-  })),
+  loadLazyRouteModule(() =>
+    import('./pages/KnowledgeBasePage').then(({ KnowledgeBasePage }) => ({
+      default: KnowledgeBasePage,
+    })),
+  ),
 );
 const AssetsPage = lazy(() =>
-  import('./pages/AssetsPage').then(({ AssetsPage }) => ({ default: AssetsPage })),
+  loadLazyRouteModule(() =>
+    import('./pages/AssetsPage').then(({ AssetsPage }) => ({ default: AssetsPage })),
+  ),
 );
 
 function PageLoading() {
@@ -34,7 +50,11 @@ function PageLoading() {
 }
 
 function lazyPage(page: ReactNode) {
-  return <Suspense fallback={<PageLoading />}>{page}</Suspense>;
+  return (
+    <LazyRouteErrorBoundary>
+      <Suspense fallback={<PageLoading />}>{page}</Suspense>
+    </LazyRouteErrorBoundary>
+  );
 }
 
 function App() {
