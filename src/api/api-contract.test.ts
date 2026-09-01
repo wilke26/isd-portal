@@ -12,6 +12,7 @@ beforeEach(() => {
   requests = [];
   responseBody = {};
   localStorage.clear();
+  sessionStorage.clear();
 
   globalThis.fetch = async (input, init) => {
     requests.push({ url: String(input), init });
@@ -24,6 +25,7 @@ beforeEach(() => {
 
 afterEach(() => {
   localStorage.clear();
+  sessionStorage.clear();
 });
 
 test('ticket detail unwraps the Laravel resource envelope', async () => {
@@ -81,7 +83,7 @@ test('asset search uses the backend search parameter', async () => {
 });
 
 test('session restore and logout authenticate against the backend', async () => {
-  localStorage.setItem('isd_portal_token', 'secret-token');
+  sessionStorage.setItem('isd_portal_token', 'secret-token');
   responseBody = { id: 3, name: 'Ada', email: 'ada@example.test' };
 
   const user = await me();

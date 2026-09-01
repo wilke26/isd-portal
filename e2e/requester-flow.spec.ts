@@ -63,6 +63,9 @@ test('requester can log in, view assets, create a ticket and log out', async ({ 
   await page.getByLabel('Passwort').fill('secret');
   await page.getByRole('button', { name: 'Anmelden' }).click();
   await expect(page.getByRole('heading', { name: 'Meine Tickets' })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem('isd_portal_token')))
+    .toBe('e2e-token');
+  expect(await page.evaluate(() => localStorage.getItem('isd_portal_token'))).toBeNull();
 
   await page.getByRole('link', { name: 'Assets' }).click();
   await expect(page.getByRole('heading', { name: 'Meine Assets' })).toBeVisible();
@@ -76,4 +79,5 @@ test('requester can log in, view assets, create a ticket and log out', async ({ 
 
   await page.getByRole('button', { name: 'Abmelden' }).click();
   await expect(page.getByRole('button', { name: 'Anmelden' })).toBeVisible();
+  expect(await page.evaluate(() => sessionStorage.getItem('isd_portal_token'))).toBeNull();
 });

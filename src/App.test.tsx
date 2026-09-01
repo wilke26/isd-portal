@@ -18,12 +18,13 @@ describe('requester portal flow', () => {
 
     expect(await screen.findByRole('heading', { name: 'Meine Tickets' })).toBeInTheDocument();
     expect(await screen.findByText('VPN funktioniert nicht')).toBeInTheDocument();
-    expect(localStorage.getItem('isd_portal_token')).toBe('test-token');
+    expect(sessionStorage.getItem('isd_portal_token')).toBe('test-token');
+    expect(localStorage.getItem('isd_portal_token')).toBeNull();
   });
 
   test('restores a session, creates a ticket and logs out', async () => {
     const user = userEvent.setup();
-    localStorage.setItem('isd_portal_token', 'existing-token');
+    sessionStorage.setItem('isd_portal_token', 'existing-token');
     renderApp(['/tickets/new']);
 
     await user.type(await screen.findByLabelText('Betreff'), 'VPN funktioniert nicht');
@@ -34,11 +35,11 @@ describe('requester portal flow', () => {
 
     await user.click(screen.getByRole('button', { name: 'Abmelden' }));
     expect(await screen.findByRole('button', { name: 'Anmelden' })).toBeInTheDocument();
-    expect(localStorage.getItem('isd_portal_token')).toBeNull();
+    expect(sessionStorage.getItem('isd_portal_token')).toBeNull();
   });
 
   test('clears an expired session when a protected API request returns 401', async () => {
-    localStorage.setItem('isd_portal_token', 'expired-token');
+    sessionStorage.setItem('isd_portal_token', 'expired-token');
     server.use(
       http.get(`${api}/tickets`, () =>
         HttpResponse.json({ message: 'Unauthenticated.' }, { status: 401 }),
@@ -48,11 +49,11 @@ describe('requester portal flow', () => {
     renderApp(['/tickets']);
 
     expect(await screen.findByRole('button', { name: 'Anmelden' })).toBeInTheDocument();
-    expect(localStorage.getItem('isd_portal_token')).toBeNull();
+    expect(sessionStorage.getItem('isd_portal_token')).toBeNull();
   });
 
   test('does not expose backend details for an inaccessible resource', async () => {
-    localStorage.setItem('isd_portal_token', 'existing-token');
+    sessionStorage.setItem('isd_portal_token', 'existing-token');
     server.use(
       http.get(`${api}/tickets/999`, () =>
         HttpResponse.json(
@@ -70,7 +71,7 @@ describe('requester portal flow', () => {
 
   test('shows the requester assets and sends the search filter to the API', async () => {
     const user = userEvent.setup();
-    localStorage.setItem('isd_portal_token', 'existing-token');
+    sessionStorage.setItem('isd_portal_token', 'existing-token');
     let requestedSearch: string | null = null;
 
     server.use(
