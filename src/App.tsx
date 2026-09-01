@@ -6,6 +6,7 @@ import { TicketsPage } from './pages/TicketsPage';
 import { NewTicketPage } from './pages/NewTicketPage';
 import { TicketDetailPage } from './pages/TicketDetailPage';
 import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
+import { AssetsPage } from './pages/AssetsPage';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/tickets/new" element={<NewTicketPage />} />
           <Route path="/tickets/:id" element={<TicketDetailPage />} />
           <Route path="/kb" element={<KnowledgeBasePage />} />
+          <Route path="/assets" element={<AssetsPage />} />
         </Route>
       </Route>
 

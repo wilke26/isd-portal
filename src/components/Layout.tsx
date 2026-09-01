@@ -30,6 +30,9 @@ export function Layout() {
             <NavLink to="/kb" className={navLinkClass}>
               Wissensdatenbank
             </NavLink>
+            <NavLink to="/assets" className={navLinkClass}>
+              Assets
+            </NavLink>
           </nav>
           <div className="flex items-center gap-3 text-sm text-slate-600">
             {user && <span>{user.name}</span>}

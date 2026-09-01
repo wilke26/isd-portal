@@ -109,9 +109,7 @@ src/
 - [x] Ticket erstellen (`POST /tickets`)
 - [x] Kommentar hinzufügen (`POST /tickets/:id/comments`)
 - [x] Wissensdatenbank durchsuchen (`GET /kb/articles?search=...`, nur lesend)
-- [ ] Eigene Assets ansehen (`GET /assets`) — API-Funktion
-      (`src/api/assets.ts`) existiert bereits, Seite/Route noch nicht
-      verdrahtet (laut Brief niedrigere Priorität)
+- [x] Eigene Assets ansehen und durchsuchen (`GET /assets`)
 
 Bewusst nicht enthalten (siehe Brief): Datei-Anhänge, Status ändern,
 jede Art von Verwaltungsfunktion.
@@ -134,8 +132,9 @@ werden. In CI wird genau dieser Pfad genutzt, damit der Requester-Flow auch
 unter der ausgelieferten CSP funktioniert.
 
 Vitest, Testing Library und MSW decken API-Verträge, Login, Session-
-Wiederherstellung, Ticketliste, Ticketanlage und Logout ab. Playwright prüft
-denselben Requester-Ablauf zusätzlich in einem echten Chromium-Browser. Die
+Wiederherstellung, Ticketliste, Asset-Liste und -Suche, Ticketanlage und Logout
+ab. Playwright prüft denselben Requester-Ablauf zusätzlich in einem echten
+Chromium-Browser. Die
 Browser-API wird dabei deterministisch geroutet. Ein separater CI-Job checkt
 zusätzlich den aktuellen Backend-Stand aus und prüft Login, Ticketanlage,
 Persistenz nach einem Reload und Logout gegen die echte Laravel-API und MySQL.
@@ -151,6 +150,5 @@ speichert das Token nicht in der lokalen Git-Konfiguration des Runners.
 
 ## Nächste Schritte
 
-1. Assets-Seite verdrahten (API-Funktion existiert bereits)
-2. Visuelles Design/Branding ist in diesem Grundgerüst bewusst neutral
+1. Visuelles Design/Branding ist in diesem Grundgerüst bewusst neutral
    gehalten — eigener Schritt, sobald die Feature-Basis steht

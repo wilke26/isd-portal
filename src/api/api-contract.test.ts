@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { afterEach, beforeEach, test } from 'vitest';
 import { logout, me } from './auth.ts';
 import { listArticles } from './kb.ts';
+import { listAssets } from './assets.ts';
 import { addComment, createTicket, getTicket } from './tickets.ts';
 
 let requests: Array<{ url: string; init?: RequestInit }> = [];
@@ -65,6 +66,17 @@ test('knowledge-base search uses the backend search parameter', async () => {
   assert.equal(
     requests[0]?.url,
     'https://isd.local/api/v1/kb/articles?search=VPN+%26+WLAN',
+  );
+});
+
+test('asset search uses the backend search parameter', async () => {
+  responseBody = { data: [], meta: {}, links: {} };
+
+  await listAssets('NB-008 & Dock');
+
+  assert.equal(
+    requests[0]?.url,
+    'https://isd.local/api/v1/assets?search=NB-008+%26+Dock',
   );
 });
 
