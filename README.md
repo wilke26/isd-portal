@@ -77,10 +77,13 @@ Token-basiert (Sanctum Bearer-Token), konsistent mit dem Rest der API — kein
 Cookie-/Session-Modus. Der Token liegt ausschließlich im `sessionStorage`
 des aktuellen Browser-Tabs (`src/lib/tokenStorage.ts`). Alte Tokens aus
 `localStorage` werden beim nächsten Zugriff entfernt und bewusst nicht
-übernommen. Damit endet die Anmeldung beim Schließen des Tabs; ein innerhalb
-des Portals erfolgreich ausgeführtes XSS könnte den Token jedoch weiterhin
-lesen. Entscheidung, Restrisiko und der spätere httpOnly-Cookie-Zielzustand
-sind in [ADR 0001](docs/adr/0001-portal-auth-token-storage.md) dokumentiert.
+übernommen. Damit endet die Anmeldung nach dem Schließen aller Browser-Kontexte
+mit einer Token-Kopie. Browser können `sessionStorage` beim Duplizieren eines
+Tabs oder beim Öffnen eines gleichartigen Tabs mit Opener initial kopieren. Ein
+innerhalb des Portals erfolgreich ausgeführtes XSS könnte den Token ebenfalls
+weiterhin lesen. Entscheidung, Restrisiken und der spätere httpOnly-Cookie-
+Zielzustand sind in
+[ADR 0001](docs/adr/0001-portal-auth-token-storage.md) dokumentiert.
 
 Bei einer 401-Antwort von der API wird zentral ausgeloggt (Event-basiert,
 siehe `onUnauthorized` in `src/api/client.ts` + `AuthContext.tsx`), damit

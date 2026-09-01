@@ -1,11 +1,11 @@
 /**
  * Kapselt, WO der Auth-Token abgelegt wird.
  *
- * Der Token bleibt nur für die Lebensdauer des Browser-Tabs erhalten. Das
- * reduziert die Persistenz auf gemeinsam genutzten Geräten, schützt den Token
- * aber nicht vor JavaScript, das bereits im Portal ausgeführt wird. Die
- * verbleibende XSS-Abwägung und der spätere Cookie-Zielzustand sind in ADR
- * 0001 dokumentiert.
+ * Der Token bleibt nur für die Lebensdauer des Browsing-Kontexts erhalten.
+ * Browser können den Speicher beim Duplizieren oder Öffnen mit Opener initial
+ * kopieren. Das reduziert die Persistenz, schützt den Token aber nicht vor
+ * JavaScript, das bereits im Portal ausgeführt wird. Details und der spätere
+ * Cookie-Zielzustand stehen in ADR 0001.
  */
 const TOKEN_KEY = 'isd_portal_token';
 

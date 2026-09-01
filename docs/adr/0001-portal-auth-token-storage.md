@@ -19,10 +19,17 @@ weiter zur Verfügung.
 ## Entscheidung
 
 Der Bearer-Token wird ausschließlich in `sessionStorage` gespeichert. Dadurch
-gilt er nur für den aktuellen Browser-Tab. Beim Lesen, Schreiben und Löschen
-entfernt das Portal zusätzlich einen eventuell vorhandenen Token aus dem alten
-`localStorage`; dieser wird nicht migriert und der Benutzer muss sich einmalig
-neu anmelden.
+gilt er für den aktuellen Top-Level-Browsing-Kontext. Beim Lesen, Schreiben und
+Löschen entfernt das Portal zusätzlich einen eventuell vorhandenen Token aus
+dem alten `localStorage`; dieser wird nicht migriert und der Benutzer muss sich
+einmalig neu anmelden.
+
+Browser können den initialen Inhalt von `sessionStorage` in einen duplizierten
+Tab oder in einen gleichartigen Tab mit `window.opener` kopieren. Ein solcher
+Tab übernimmt daher möglicherweise die bestehende Anmeldung. Nach dem Öffnen
+sind beide Speicher wieder voneinander getrennt; ein Logout in einem Tab löscht
+die Kopie in einem anderen Tab nicht unmittelbar. Ein unabhängig geöffneter
+Tab ohne Opener beginnt dagegen ohne Token.
 
 Das Portal validiert einen vorhandenen Token beim Start weiterhin über
 `GET /auth/me`. Bei Logout oder einer zentral erkannten 401-Antwort werden Token
@@ -60,7 +67,9 @@ Browser- und API-Integrationstests abgesichert werden.
 ## Folgen
 
 - Ein Neuladen im selben Tab behält die Sitzung bei.
-- Ein neuer Tab beginnt ohne Sitzung; die Anmeldung endet mit dem Schließen des
-  Tabs.
+- Ein unabhängiger neuer Tab ohne Opener beginnt ohne Sitzung.
+- Ein duplizierter Tab oder ein gleichartiger Tab mit Opener kann eine Kopie der
+  bestehenden Sitzung erhalten. Die Anmeldung endet erst, wenn alle Kontexte
+  mit einer solchen Token-Kopie geschlossen oder einzeln abgemeldet wurden.
 - Benutzer älterer Portal-Versionen müssen sich einmalig erneut anmelden.
 - XSS kann den Token während einer aktiven Sitzung weiterhin auslesen.
