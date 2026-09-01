@@ -1,26 +1,55 @@
+import { lazy, Suspense } from 'react';
+import type { ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './routes/ProtectedRoute';
-import { LoginPage } from './pages/LoginPage';
-import { TicketsPage } from './pages/TicketsPage';
-import { NewTicketPage } from './pages/NewTicketPage';
-import { TicketDetailPage } from './pages/TicketDetailPage';
-import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
-import { AssetsPage } from './pages/AssetsPage';
+
+const LoginPage = lazy(() =>
+  import('./pages/LoginPage').then(({ LoginPage }) => ({ default: LoginPage })),
+);
+const TicketsPage = lazy(() =>
+  import('./pages/TicketsPage').then(({ TicketsPage }) => ({ default: TicketsPage })),
+);
+const NewTicketPage = lazy(() =>
+  import('./pages/NewTicketPage').then(({ NewTicketPage }) => ({ default: NewTicketPage })),
+);
+const TicketDetailPage = lazy(() =>
+  import('./pages/TicketDetailPage').then(({ TicketDetailPage }) => ({ default: TicketDetailPage })),
+);
+const KnowledgeBasePage = lazy(() =>
+  import('./pages/KnowledgeBasePage').then(({ KnowledgeBasePage }) => ({
+    default: KnowledgeBasePage,
+  })),
+);
+const AssetsPage = lazy(() =>
+  import('./pages/AssetsPage').then(({ AssetsPage }) => ({ default: AssetsPage })),
+);
+
+function PageLoading() {
+  return (
+    <div role="status" aria-live="polite" className="py-12 text-center text-sm text-slate-500">
+      Seite wird geladen …
+    </div>
+  );
+}
+
+function lazyPage(page: ReactNode) {
+  return <Suspense fallback={<PageLoading />}>{page}</Suspense>;
+}
 
 function App() {
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/login" element={lazyPage(<LoginPage />)} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
           <Route index element={<Navigate to="/tickets" replace />} />
-          <Route path="/tickets" element={<TicketsPage />} />
-          <Route path="/tickets/new" element={<NewTicketPage />} />
-          <Route path="/tickets/:id" element={<TicketDetailPage />} />
-          <Route path="/kb" element={<KnowledgeBasePage />} />
-          <Route path="/assets" element={<AssetsPage />} />
+          <Route path="/tickets" element={lazyPage(<TicketsPage />)} />
+          <Route path="/tickets/new" element={lazyPage(<NewTicketPage />)} />
+          <Route path="/tickets/:id" element={lazyPage(<TicketDetailPage />)} />
+          <Route path="/kb" element={lazyPage(<KnowledgeBasePage />)} />
+          <Route path="/assets" element={lazyPage(<AssetsPage />)} />
         </Route>
       </Route>
 

@@ -36,6 +36,9 @@ jobs:
       - name: Type-check and production build
         run: npm run build
 
+      - name: Enforce bundle budgets and route splitting
+        run: npm run bundle:check
+
       - name: Lint without warnings
         run: npm run lint -- --deny-warnings
 
