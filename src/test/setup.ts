@@ -8,6 +8,7 @@ beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
 afterEach(() => {
   cleanup();
   localStorage.clear();
+  sessionStorage.clear();
   server.resetHandlers();
 });
 

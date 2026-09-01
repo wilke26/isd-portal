@@ -35,20 +35,21 @@ const asset = {
   updated_at: '2026-08-01T10:00:00Z',
 };
 
-test('requester can log in, view assets, create a ticket and log out', async ({ page }) => {
-  await page.route(`${api}/auth/login`, (route) => route.fulfill({ json: { token: 'e2e-token', user } }));
-  await page.route(`${api}/auth/logout`, (route) => route.fulfill({ json: { message: 'Erfolgreich abgemeldet.' } }));
-  await page.route(`${api}/tickets`, async (route) => {
+test('requester can log in, view assets, create a ticket and log out', async ({ context, page }) => {
+  await context.route(`${api}/auth/login`, (route) => route.fulfill({ json: { token: 'e2e-token', user } }));
+  await context.route(`${api}/auth/logout`, (route) => route.fulfill({ json: { message: 'Erfolgreich abgemeldet.' } }));
+  await context.route(`${api}/auth/me`, (route) => route.fulfill({ json: user }));
+  await context.route(`${api}/tickets`, async (route) => {
     if (route.request().method() === 'POST') {
       await route.fulfill({ status: 201, json: { data: ticket } });
       return;
     }
     await route.fulfill({ json: { data: [ticket], links: {}, meta: {} } });
   });
-  await page.route(`${api}/tickets/42`, (route) =>
+  await context.route(`${api}/tickets/42`, (route) =>
     route.fulfill({ json: { data: { ...ticket, comments: [], attachments: [], history: [] } } }),
   );
-  await page.route(`${api}/assets`, (route) =>
+  await context.route(`${api}/assets`, (route) =>
     route.fulfill({
       json: {
         data: [asset],
@@ -63,6 +64,16 @@ test('requester can log in, view assets, create a ticket and log out', async ({ 
   await page.getByLabel('Passwort').fill('secret');
   await page.getByRole('button', { name: 'Anmelden' }).click();
   await expect(page.getByRole('heading', { name: 'Meine Tickets' })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem('isd_portal_token')))
+    .toBe('e2e-token');
+  expect(await page.evaluate(() => localStorage.getItem('isd_portal_token'))).toBeNull();
+
+  const popupPromise = page.waitForEvent('popup');
+  await page.evaluate(() => window.open('/tickets', '_blank'));
+  const popup = await popupPromise;
+  await expect(popup.getByRole('heading', { name: 'Meine Tickets' })).toBeVisible();
+  expect(await popup.evaluate(() => sessionStorage.getItem('isd_portal_token'))).toBe('e2e-token');
+  await popup.close();
 
   await page.getByRole('link', { name: 'Assets' }).click();
   await expect(page.getByRole('heading', { name: 'Meine Assets' })).toBeVisible();
@@ -76,4 +87,5 @@ test('requester can log in, view assets, create a ticket and log out', async ({ 
 
   await page.getByRole('button', { name: 'Abmelden' }).click();
   await expect(page.getByRole('button', { name: 'Anmelden' })).toBeVisible();
+  expect(await page.evaluate(() => sessionStorage.getItem('isd_portal_token'))).toBeNull();
 });

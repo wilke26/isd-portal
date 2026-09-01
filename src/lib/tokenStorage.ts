@@ -1,22 +1,31 @@
 /**
  * Kapselt, WO der Auth-Token abgelegt wird.
  *
- * Aktuell: localStorage. Das ist der pragmatische Ansatz für Token-basiertes
- * Sanctum ohne Refresh-Flow, hat aber den bekannten Trade-off, dass
- * localStorage über XSS auslesbar ist. Wenn das relevant wird, ist dies
- * die einzige Stelle, die angepasst werden muss (z. B. auf In-Memory +
- * stillen Re-Login beim Neuladen umstellen).
+ * Der Token bleibt nur für die Lebensdauer des Browsing-Kontexts erhalten.
+ * Browser können den Speicher beim Duplizieren oder Öffnen mit Opener initial
+ * kopieren. Das reduziert die Persistenz, schützt den Token aber nicht vor
+ * JavaScript, das bereits im Portal ausgeführt wird. Details und der spätere
+ * Cookie-Zielzustand stehen in ADR 0001.
  */
 const TOKEN_KEY = 'isd_portal_token';
 
 export const tokenStorage = {
   get(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
+    clearLegacyToken();
+    return sessionStorage.getItem(TOKEN_KEY);
   },
   set(token: string): void {
-    localStorage.setItem(TOKEN_KEY, token);
+    clearLegacyToken();
+    sessionStorage.setItem(TOKEN_KEY, token);
   },
   clear(): void {
-    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+    clearLegacyToken();
   },
 };
+
+function clearLegacyToken(): void {
+  // Persistente Tokens aus Versionen vor ADR 0001 werden bewusst verworfen
+  // und nicht in den neuen Speicher übernommen.
+  localStorage.removeItem(TOKEN_KEY);
+}
