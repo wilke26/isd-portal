@@ -131,22 +131,12 @@ jobs:
           path: portal
           persist-credentials: false
 
-      - name: Verify backend checkout credential is configured
-        env:
-          BACKEND_READ_TOKEN: ${{ secrets.ISD_BACKEND_READ_TOKEN }}
-        run: |
-          if [ -z "$BACKEND_READ_TOKEN" ]; then
-            echo "::error::Repository secret ISD_BACKEND_READ_TOKEN is required to read the private wilke26/isd repository."
-            exit 1
-          fi
-
       - name: Checkout backend
         uses: actions/checkout@v4
         with:
           repository: wilke26/isd
           ref: main
           path: isd
-          token: ${{ secrets.ISD_BACKEND_READ_TOKEN }}
           persist-credentials: false
 
       - name: Verify the vendored API contract matches the backend
