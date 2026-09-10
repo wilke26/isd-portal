@@ -158,11 +158,9 @@ Client nach einem Deployment noch einen veralteten Chunk anfordert, lädt das
 Portal einmalig die aktuelle Anwendung und zeigt bei einem erneuten Fehler eine
 stabile Wiederherstellungsseite. Fehlende Asset-Dateien liefern dabei `404`.
 
-Da `isd` ein privates, separates Repository ist, benötigt dieser CI-Job das
-Repository-Secret `ISD_BACKEND_READ_TOKEN`. Hinterlegt wird ein Fine-grained
-Personal Access Token, das ausschließlich für `wilke26/isd` gilt und dort nur
-die Repository-Berechtigung **Contents: Read-only** besitzt. Der Checkout
-speichert das Token nicht in der lokalen Git-Konfiguration des Runners.
+Da `isd` ein öffentliches, separates Repository ist, benötigt dieser CI-Job
+kein zusätzliches Repository-Secret. Der Checkout speichert Zugangsdaten nicht
+in der lokalen Git-Konfiguration des Runners.
 
 ## Nächste Schritte
 
