@@ -1,0 +1,177 @@
+# isd-portal
+
+[English](README.md) | **Deutsch**
+
+## API-Vertrag
+
+`openapi/portal-v1.json` ist eine im Repository mitgeführte Kopie des vom Backend
+verwalteten OpenAPI-3.1-Vertrags. Die TypeScript-Modelle in
+`src/types/generated/portal-v1.ts` werden daraus generiert und dürfen nicht
+manuell bearbeitet werden.
+
+```bash
+npm run api:generate
+npm run api:check
+```
+
+Die CI schlägt fehl, wenn die eingecheckten generierten Typen nicht aktuell sind.
+Ändert sich der Backend-Vertrag, muss zuerst die mitgeführte Schema-Datei
+aktualisiert werden. Anschließend werden die Typen neu generiert und beide Dateien
+gemeinsam committed.
+
+Self-Service-Portal für Requester, das gegen die bestehende `isd`-REST-API
+(`/api/v1`) spricht. Kein eigenes Backend, keine eigene Datenhaltung — siehe
+Projekt-Brief für Hintergrund und Entscheidungen.
+
+## Stack
+
+- **Vite** + **React 19** + **TypeScript**
+- **React Router 7** — reines Routing (Pfade, `ProtectedRoute`), bewusst
+  *ohne* die Router-eigenen Data-APIs (Loader), um nicht zwei
+  Fetching-Paradigmen parallel zu haben
+- **TanStack Query** — für sämtliches Laden/Mutieren von Server-State
+- **Tailwind CSS v4** (über `@tailwindcss/vite`, kein separates
+  `tailwind.config.js` nötig)
+- Client-State (Auth) über `useState`/`useContext` — für den aktuellen
+  Umfang ausreichend
+
+## Setup
+
+```bash
+npm install
+cp .env.example .env   # bei Bedarf VITE_API_BASE_URL anpassen
+npm run dev
+```
+
+Läuft dann auf `http://localhost:5173`. Dieser Origin ist in der
+`isd`-CORS-Konfiguration bereits für die lokale Entwicklung freigegeben.
+
+## Produktionscontainer und Browser-Sicherheit
+
+Das Repository enthält einen Multi-Stage-Produktionsbuild. Node erzeugt die
+statischen Dateien; ein unprivilegierter Caddy-Prozess liefert sie anschließend
+mit einer restriktiven Content Security Policy und zusätzlichen Browser-
+Sicherheitsheadern aus.
+
+```bash
+cp .env.example .env
+docker compose up --build -d
+curl -I http://127.0.0.1:8080
+```
+
+Das Portal ist danach unter `http://127.0.0.1:8080` erreichbar. Für ein echtes
+Deployment müssen zwei zusammengehörige Werte gesetzt werden:
+
+- `VITE_API_BASE_URL`: vollständige, beim Build in das JavaScript eingebettete
+  API-Basis-URL, beispielsweise `https://api.example.com/api/v1`
+- `PORTAL_API_ORIGIN`: reine Origin desselben Ziels für CSP `connect-src`,
+  beispielsweise `https://api.example.com`
+
+Im Backend muss die öffentlich ausgelieferte Portal-Origin gleichzeitig in
+`CORS_ALLOWED_ORIGINS` stehen. Die Allowlist darf nicht durch `*` ersetzt
+werden. Der Produktions-CSP erlaubt ausschließlich eigene Skripte und Styles,
+verbietet Plugins und Framing und beschränkt Netzwerkzugriffe auf die explizite
+API-Origin. Externe Fonts, Analytics oder weitere Ziele müssen bewusst in
+`docker/Caddyfile` ergänzt und anschließend im Header-Smoke-Test abgesichert
+werden.
+
+## Auth
+
+Token-basiert (Sanctum Bearer-Token), konsistent mit dem Rest der API — kein
+Cookie-/Session-Modus. Der Token liegt ausschließlich im `sessionStorage`
+des aktuellen Browser-Tabs (`src/lib/tokenStorage.ts`). Alte Tokens aus
+`localStorage` werden beim nächsten Zugriff entfernt und bewusst nicht
+übernommen. Damit endet die Anmeldung nach dem Schließen aller Browser-Kontexte
+mit einer Token-Kopie. Browser können `sessionStorage` beim Duplizieren eines
+Tabs oder beim Öffnen eines gleichartigen Tabs mit Opener initial kopieren. Ein
+innerhalb des Portals erfolgreich ausgeführtes XSS könnte den Token ebenfalls
+weiterhin lesen. Entscheidung, Restrisiken und der spätere httpOnly-Cookie-
+Zielzustand sind in
+[ADR 0001](docs/adr/0001-portal-auth-token-storage.md) dokumentiert.
+
+Bei einer 401-Antwort von der API wird zentral ausgeloggt (Event-basiert,
+siehe `onUnauthorized` in `src/api/client.ts` + `AuthContext.tsx`), damit
+`api/client.ts` nicht direkt von `AuthContext` abhängen muss.
+Beim App-Start wird ein vorhandener Token mit `GET /auth/me` validiert. Das
+Abmelden ruft `POST /auth/logout` auf und leert anschließend den gesamten
+TanStack-Query-Cache, damit keine Daten zwischen Benutzerkonten bestehen
+bleiben.
+
+## Struktur
+
+```
+src/
+  api/            API-Aufrufe pro Ressource (auth, tickets, kb, assets)
+                  + client.ts (Fetch-Wrapper: Base-URL, Bearer-Header, Fehler)
+  context/        AuthContext (Token/User-State, Login/Logout)
+  routes/         ProtectedRoute (Redirect zu /login ohne Auth)
+  components/     Layout (Nav), kleine geteilte UI-Bausteine
+  pages/          Eine Datei pro Route
+  types/          Geteilte TS-Typen für API-Ressourcen
+  lib/            config.ts (Env), tokenStorage.ts
+```
+
+## Umgesetzte Features (MVP)
+
+- [x] Login (`POST /auth/login`)
+- [x] Eigene Tickets — Liste (`GET /tickets`) + Detail (`GET /tickets/:id`)
+- [x] Ticket erstellen (`POST /tickets`)
+- [x] Kommentar hinzufügen (`POST /tickets/:id/comments`)
+- [x] Wissensdatenbank durchsuchen (`GET /kb/articles?search=...`, nur lesend)
+- [x] Eigene Assets ansehen und durchsuchen (`GET /assets`)
+
+Bewusst nicht enthalten (siehe Brief): Datei-Anhänge, Status ändern,
+jede Art von Verwaltungsfunktion.
+
+## Qualitätssicherung
+
+```bash
+npm test
+npm run lint -- --deny-warnings
+npm run build
+npm run bundle:check
+npx playwright install chromium
+npm run test:e2e
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:8080 npm run test:e2e:full-stack
+npm audit --omit=dev --audit-level=high
+```
+
+Mit `PLAYWRIGHT_BASE_URL=http://127.0.0.1:8080 npm run test:e2e` kann derselbe
+Browser-Test gegen einen bereits laufenden Produktionscontainer ausgeführt
+werden. In CI wird genau dieser Pfad genutzt, damit der Requester-Flow auch
+unter der ausgelieferten CSP funktioniert.
+
+Vitest, Testing Library und MSW decken API-Verträge, Login, Session-
+Wiederherstellung, Ticketliste, Asset-Liste und -Suche, Ticketanlage und Logout
+ab. Playwright prüft denselben Requester-Ablauf zusätzlich in einem echten
+Chromium-Browser. Die
+Browser-API wird dabei deterministisch geroutet. Ein separater CI-Job checkt
+zusätzlich den aktuellen Backend-Stand aus und prüft Login, Ticketanlage,
+Persistenz nach einem Reload und Logout gegen die echte Laravel-API und MySQL.
+Vor dem Lauf wird außerdem sichergestellt, dass die vendorte OpenAPI-Datei mit
+dem Backend-Vertrag identisch ist. Alle Prüfungen laufen bei Pushes und Pull
+Requests.
+
+Die Seitenrouten werden als separate JavaScript-Chunks ausgeliefert und erst
+beim Aufruf geladen. `npm run bundle:check` wertet das Vite-Manifest aus und
+stellt sicher, dass alle sechs Seiten dynamisch bleiben, das initial geladene
+JavaScript komprimiert höchstens 90 KiB umfasst und kein einzelner Seiten-Chunk
+einschließlich seiner zusätzlichen Shared-Chunks 15 KiB überschreitet. Diese
+Prüfung läuft nach dem Produktions-Build auch in CI. Falls ein bereits geöffneter
+Client nach einem Deployment noch einen veralteten Chunk anfordert, lädt das
+Portal einmalig die aktuelle Anwendung und zeigt bei einem erneuten Fehler eine
+stabile Wiederherstellungsseite. Fehlende Asset-Dateien liefern dabei `404`.
+
+Da `isd` ein öffentliches, separates Repository ist, benötigt dieser CI-Job
+kein zusätzliches Repository-Secret. Der Checkout speichert Zugangsdaten nicht
+in der lokalen Git-Konfiguration des Runners.
+
+## Nächste Schritte
+
+1. Visuelles Design/Branding ist in diesem Grundgerüst bewusst neutral
+   gehalten — eigener Schritt, sobald die Feature-Basis steht
+
+## Lizenz
+
+Dieses Projekt steht unter den Bedingungen der Datei [LICENSE](LICENSE) zur
+Verfügung.
