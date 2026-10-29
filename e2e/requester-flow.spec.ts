@@ -35,6 +35,18 @@ const asset = {
   updated_at: '2026-08-01T10:00:00Z',
 };
 
+const article = {
+  id: 5,
+  title: 'VPN-Verbindung einrichten',
+  slug: 'vpn-verbindung-einrichten',
+  body: 'Öffne den VPN-Client und melde dich mit deinem Unternehmenskonto an.',
+  addendum: null,
+  status: { value: 'published', label: 'Veröffentlicht' },
+  author: user,
+  category: { id: 2, name: 'Netzwerk', slug: 'netzwerk' },
+  tags: [{ id: 3, name: 'VPN', slug: 'vpn' }],
+};
+
 test('requester can log in, view assets, create a ticket and log out', async ({ context, page }) => {
   await context.route(`${api}/auth/login`, (route) => route.fulfill({ json: { token: 'e2e-token', user } }));
   await context.route(`${api}/auth/logout`, (route) => route.fulfill({ json: { message: 'Erfolgreich abgemeldet.' } }));
@@ -58,6 +70,16 @@ test('requester can log in, view assets, create a ticket and log out', async ({ 
       },
     }),
   );
+  await context.route(`${api}/kb/articles**`, (route) => {
+    const hasSearch = new URL(route.request().url()).searchParams.has('search');
+    return route.fulfill({
+      json: {
+        data: hasSearch ? [] : [article],
+        links: { first: null, last: null, prev: null, next: null },
+        meta: { current_page: 1, last_page: 1, per_page: 15, total: hasSearch ? 0 : 1 },
+      },
+    });
+  });
 
   await page.goto('/login');
   await page.getByLabel('E-Mail').fill('ada@example.test');
@@ -78,6 +100,13 @@ test('requester can log in, view assets, create a ticket and log out', async ({ 
   await page.getByRole('link', { name: 'Assets' }).click();
   await expect(page.getByRole('heading', { name: 'Meine Assets' })).toBeVisible();
   await expect(page.getByText(asset.name)).toBeVisible();
+
+  await page.getByRole('link', { name: 'Wissensdatenbank' }).click();
+  await expect(page.getByRole('heading', { name: 'Wissensdatenbank' })).toBeVisible();
+  await expect(page.getByText(article.title)).toBeVisible();
+  await page.getByLabel('Artikel durchsuchen').fill('Drucker');
+  await page.getByRole('button', { name: 'Suchen' }).click();
+  await expect(page.getByText('Keine passenden Artikel gefunden')).toBeVisible();
 
   await page.getByRole('link', { name: 'Neues Ticket' }).first().click();
   await page.getByLabel('Betreff').fill(ticket.title);
