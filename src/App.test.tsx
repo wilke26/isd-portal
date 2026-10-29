@@ -43,6 +43,61 @@ describe('requester portal flow', () => {
     expect(sessionStorage.getItem('isd_portal_token')).toBeNull();
   });
 
+  test('validates ticket fields before creating a request', async () => {
+    const user = userEvent.setup();
+    sessionStorage.setItem('isd_portal_token', 'existing-token');
+    let createRequests = 0;
+
+    server.use(
+      http.post(`${api}/tickets`, () => {
+        createRequests += 1;
+        return HttpResponse.json({ message: 'Unexpected request.' }, { status: 500 });
+      }),
+    );
+
+    renderApp(['/tickets/new']);
+
+    const titleInput = await screen.findByLabelText('Betreff');
+    expect(titleInput).toHaveAttribute('maxlength', '255');
+    expect(screen.getByLabelText('Priorität')).toHaveValue('medium');
+
+    await user.type(titleInput, '   ');
+    await user.type(screen.getByLabelText('Beschreibung'), '   ');
+    await user.click(screen.getByRole('button', { name: 'Ticket erstellen' }));
+
+    expect(await screen.findByText('Bitte gib einen aussagekräftigen Betreff ein.')).toBeInTheDocument();
+    expect(screen.getByText('Bitte beschreibe dein Anliegen.')).toBeInTheDocument();
+    expect(createRequests).toBe(0);
+  });
+
+  test('shows backend validation errors at the affected ticket field', async () => {
+    const user = userEvent.setup();
+    sessionStorage.setItem('isd_portal_token', 'existing-token');
+
+    server.use(
+      http.post(`${api}/tickets`, () =>
+        HttpResponse.json(
+          {
+            message: 'The given data was invalid.',
+            errors: { title: ['Dieser Betreff kann nicht verwendet werden.'] },
+          },
+          { status: 422 },
+        ),
+      ),
+    );
+
+    renderApp(['/tickets/new']);
+
+    await user.type(await screen.findByLabelText('Betreff'), 'VPN-Problem');
+    await user.type(screen.getByLabelText('Beschreibung'), 'Die Verbindung schlägt fehl.');
+    await user.selectOptions(screen.getByLabelText('Priorität'), 'high');
+    await user.click(screen.getByRole('button', { name: 'Ticket erstellen' }));
+
+    expect(await screen.findByText('Dieser Betreff kann nicht verwendet werden.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Betreff')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.queryByText('The given data was invalid.')).not.toBeInTheDocument();
+  });
+
   test('clears an expired session when a protected API request returns 401', async () => {
     sessionStorage.setItem('isd_portal_token', 'expired-token');
     server.use(
