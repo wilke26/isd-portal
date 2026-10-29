@@ -18,6 +18,9 @@ describe('requester portal flow', () => {
 
     expect(await screen.findByRole('heading', { name: 'Meine Tickets' })).toBeInTheDocument();
     expect(await screen.findByText('VPN funktioniert nicht')).toBeInTheDocument();
+    expect(screen.getByText('Offen')).toBeInTheDocument();
+    expect(screen.getByText('Priorität Mittel')).toBeInTheDocument();
+    expect(screen.getByText('1 Ticket')).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Hauptnavigation' })).toBeInTheDocument();
     expect(screen.getByText('ISD Portal')).toBeInTheDocument();
     expect(sessionStorage.getItem('isd_portal_token')).toBe('test-token');
