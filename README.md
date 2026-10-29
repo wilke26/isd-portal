@@ -164,8 +164,10 @@ recovery screen rather than unmounting the UI. Missing static assets return HTTP
 
 ## Current roadmap
 
-The functional foundation is complete. Visual design and project-specific branding
-remain intentionally neutral and are planned as a separate iteration.
+The functional foundation is complete. The portal now includes an ISD-specific
+visual identity, a branded login experience, and a responsive application shell.
+Further iterations can refine individual resource pages without changing the
+established API and accessibility foundations.
 
 ## License
 
