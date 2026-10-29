@@ -169,11 +169,12 @@ in der lokalen Git-Konfiguration des Runners.
 ## Nächste Schritte
 
 Das Portal besitzt nun ein ISD-spezifisches Erscheinungsbild, einen gebrandeten
-Login und einen responsiven Anwendungsrahmen. Ticketübersicht und Ticketdetail
-stellen außerdem Status, Priorität, Zuständigkeit, Zeitangaben und Gesprächsverlauf
-konsistent dar. Weitere Iterationen können dieselbe Gestaltungstiefe auf die
-verbleibenden Ressourcenseiten übertragen, ohne die bestehende API- und
-Barrierefreiheitsbasis zu verändern.
+Login und einen responsiven Anwendungsrahmen. Der Ticketbereich stellt Status,
+Priorität, Zuständigkeit, Zeitangaben und Gesprächsverlauf konsistent dar. Die
+Wissensdatenbank ergänzt eine gezielte Suche, übersichtliche Artikelkarten,
+Schlagwörter, Kategorien und aufklappbare vollständige Inhalte. Weitere Iterationen
+können dieselbe Gestaltungstiefe auf die verbleibenden Ressourcenseiten übertragen,
+ohne die bestehende API- und Barrierefreiheitsbasis zu verändern.
 
 ## Lizenz
 

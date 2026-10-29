@@ -44,6 +44,18 @@ export const asset = {
   updated_at: '2026-08-01T10:00:00Z',
 };
 
+export const article = {
+  id: 5,
+  title: 'VPN-Verbindung einrichten',
+  slug: 'vpn-verbindung-einrichten',
+  body: 'Öffne den VPN-Client und melde dich mit deinem Unternehmenskonto an.',
+  addendum: 'Starte den Client nach einer Aktualisierung neu.',
+  status: { value: 'published', label: 'Veröffentlicht' },
+  author: user,
+  category: { id: 2, name: 'Netzwerk', slug: 'netzwerk' },
+  tags: [{ id: 3, name: 'VPN', slug: 'vpn' }],
+};
+
 const paginatedAssets = {
   data: [asset],
   links: { first: null, last: null, prev: null, next: null },
@@ -56,6 +68,11 @@ export const handlers = [
   http.post(`${api}/auth/logout`, () => HttpResponse.json({ message: 'Erfolgreich abgemeldet.' })),
   http.get(`${api}/tickets`, () => HttpResponse.json(paginatedTickets)),
   http.get(`${api}/assets`, () => HttpResponse.json(paginatedAssets)),
+  http.get(`${api}/kb/articles`, () => HttpResponse.json({
+    data: [article],
+    links: { first: null, last: null, prev: null, next: null },
+    meta: { current_page: 1, last_page: 1, per_page: 15, total: 1 },
+  })),
   http.post(`${api}/tickets`, () => HttpResponse.json({ data: ticket }, { status: 201 })),
   http.get(`${api}/tickets/:id`, () =>
     HttpResponse.json({ data: { ...ticket, comments: [], attachments: [], history: [] } }),

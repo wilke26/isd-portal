@@ -118,4 +118,48 @@ describe('requester portal flow', () => {
     expect(await screen.findByText('Keine passenden Assets gefunden.')).toBeInTheDocument();
     expect(requestedSearch).toBe('docking station');
   });
+
+  test('searches the knowledge base and exposes complete article content', async () => {
+    const user = userEvent.setup();
+    sessionStorage.setItem('isd_portal_token', 'existing-token');
+    let requestedSearch: string | null = null;
+
+    server.use(
+      http.get(`${api}/kb/articles`, ({ request }) => {
+        requestedSearch = new URL(request.url).searchParams.get('search');
+
+        return HttpResponse.json({
+          data: requestedSearch ? [] : [{
+            id: 5,
+            title: 'VPN-Verbindung einrichten',
+            slug: 'vpn-verbindung-einrichten',
+            body: 'Öffne den VPN-Client und melde dich mit deinem Unternehmenskonto an.',
+            addendum: 'Starte den Client nach einer Aktualisierung neu.',
+            status: { value: 'published', label: 'Veröffentlicht' },
+            author: { id: 3, name: 'Ada Lovelace', email: 'ada@example.test' },
+            category: { id: 2, name: 'Netzwerk', slug: 'netzwerk' },
+            tags: [{ id: 3, name: 'VPN', slug: 'vpn' }],
+          }],
+          links: { first: null, last: null, prev: null, next: null },
+          meta: { current_page: 1, last_page: 1, per_page: 15, total: requestedSearch ? 0 : 1 },
+        });
+      }),
+    );
+
+    renderApp(['/kb']);
+
+    expect(await screen.findByText('VPN-Verbindung einrichten')).toBeInTheDocument();
+    expect(screen.getByText('Netzwerk')).toBeInTheDocument();
+    expect(screen.getByText('VPN')).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Artikel durchsuchen'), '  drucker  ');
+    await user.click(screen.getByRole('button', { name: 'Suchen' }));
+
+    expect(await screen.findByText('Keine passenden Artikel gefunden')).toBeInTheDocument();
+    expect(requestedSearch).toBe('drucker');
+
+    await user.click(screen.getByRole('button', { name: 'Alle Artikel anzeigen' }));
+    expect(await screen.findByText('VPN-Verbindung einrichten')).toBeInTheDocument();
+    expect(requestedSearch).toBeNull();
+  });
 });
