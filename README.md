@@ -170,8 +170,10 @@ The requester ticket workspace presents status, priority, ownership, timestamps,
 and conversation history consistently. The knowledge base adds deliberate search,
 scannable article cards, tags, categories, and expandable full content. The asset
 workspace uses responsive device cards with assignment, warranty, inventory, and
-status information. Further iterations can refine the remaining requester flows
-without changing the established API and accessibility foundations.
+status information. Ticket creation now provides guided inputs, priority selection,
+field-level validation, character feedback, and guarded submission. Further
+iterations can refine cross-page feedback without changing the established API and
+accessibility foundations.
 
 ## License
 

@@ -174,8 +174,10 @@ Priorität, Zuständigkeit, Zeitangaben und Gesprächsverlauf konsistent dar. Di
 Wissensdatenbank ergänzt eine gezielte Suche, übersichtliche Artikelkarten,
 Schlagwörter, Kategorien und aufklappbare vollständige Inhalte. Der Asset-Bereich
 nutzt responsive Gerätekarten mit Angaben zu Zuweisung, Garantie, Inventar und
-Status. Weitere Iterationen können die verbleibenden Requester-Abläufe verfeinern,
-ohne die bestehende API- und Barrierefreiheitsbasis zu verändern.
+Status. Die Ticketanlage bietet geführte Eingaben, Prioritätsauswahl,
+feldbezogene Validierung, Zeichenrückmeldung und geschütztes Absenden. Weitere
+Iterationen können seitenübergreifende Rückmeldungen verfeinern, ohne die bestehende
+API- und Barrierefreiheitsbasis zu verändern.
 
 ## Lizenz
 
