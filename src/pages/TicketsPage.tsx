@@ -5,7 +5,7 @@ import { LoadingState, ErrorState } from '../components/QueryState';
 import { FormattedDate, TicketPriority, TicketStatusBadge } from '../components/TicketPresentation';
 
 export function TicketsPage() {
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['tickets'],
     queryFn: listTickets,
   });
@@ -32,7 +32,12 @@ export function TicketsPage() {
       </div>
 
       {isLoading && <LoadingState label="Tickets werden geladen …" />}
-      {isError && <ErrorState message={error instanceof Error ? error.message : 'Tickets konnten nicht geladen werden.'} />}
+      {isError && (
+        <ErrorState
+          message={error instanceof Error ? error.message : 'Tickets konnten nicht geladen werden.'}
+          onRetry={() => void refetch()}
+        />
+      )}
 
       {data && data.data.length === 0 && (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">

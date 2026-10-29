@@ -175,9 +175,11 @@ Wissensdatenbank ergänzt eine gezielte Suche, übersichtliche Artikelkarten,
 Schlagwörter, Kategorien und aufklappbare vollständige Inhalte. Der Asset-Bereich
 nutzt responsive Gerätekarten mit Angaben zu Zuweisung, Garantie, Inventar und
 Status. Die Ticketanlage bietet geführte Eingaben, Prioritätsauswahl,
-feldbezogene Validierung, Zeichenrückmeldung und geschütztes Absenden. Weitere
-Iterationen können seitenübergreifende Rückmeldungen verfeinern, ohne die bestehende
-API- und Barrierefreiheitsbasis zu verändern.
+feldbezogene Validierung, Zeichenrückmeldung und geschütztes Absenden. Gemeinsame
+Lade-, Fehler-, Wiederholen- und Erfolgsrückmeldungen machen asynchrone Abläufe
+verständlich und kündigen wichtige Änderungen barrierefrei an. Weitere Iterationen
+können verbleibende Interaktionsdetails verfeinern, ohne die bestehende API-Basis
+zu verändern.
 
 ## Lizenz
 

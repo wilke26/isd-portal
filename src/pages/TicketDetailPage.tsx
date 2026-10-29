@@ -1,8 +1,8 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { addComment, getTicket } from '../api/tickets';
-import { LoadingState, ErrorState } from '../components/QueryState';
+import { LoadingState, ErrorState, SuccessMessage } from '../components/QueryState';
 import { ApiError } from '../api/client';
 import { FormattedDate, TicketPriority, TicketStatusBadge } from '../components/TicketPresentation';
 
@@ -10,18 +10,31 @@ export function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
   const ticketId = Number(id);
   const queryClient = useQueryClient();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [commentBody, setCommentBody] = useState('');
+  const navigationMessage = (location.state as { successMessage?: unknown } | null)?.successMessage;
+  const [successMessage, setSuccessMessage] = useState(
+    typeof navigationMessage === 'string' ? navigationMessage : null,
+  );
 
-  const { data: ticket, isLoading, isError, error } = useQuery({
+  const { data: ticket, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['tickets', ticketId],
     queryFn: () => getTicket(ticketId),
     enabled: Number.isFinite(ticketId),
   });
 
+  useEffect(() => {
+    if (typeof navigationMessage === 'string') {
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.pathname, navigate, navigationMessage]);
+
   const commentMutation = useMutation({
     mutationFn: (body: string) => addComment(ticketId, body),
     onSuccess: () => {
       setCommentBody('');
+      setSuccessMessage('Dein Kommentar wurde gespeichert.');
       queryClient.invalidateQueries({ queryKey: ['tickets', ticketId] });
     },
   });
@@ -35,13 +48,22 @@ export function TicketDetailPage() {
   if (isLoading) return <LoadingState label="Ticket wird geladen …" />;
   if (isError) {
     return (
-      <ErrorState message={error instanceof Error ? error.message : 'Ticket konnte nicht geladen werden.'} />
+      <ErrorState
+        message={error instanceof Error ? error.message : 'Ticket konnte nicht geladen werden.'}
+        onRetry={() => void refetch()}
+      />
     );
   }
   if (!ticket) return null;
 
   return (
     <div>
+      {successMessage && (
+        <div className="mb-5">
+          <SuccessMessage message={successMessage} onDismiss={() => setSuccessMessage(null)} />
+        </div>
+      )}
+
       <Link to="/tickets" className="mb-5 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-brand-800">
         <span aria-hidden="true">←</span> Zurück zu meinen Tickets
       </Link>

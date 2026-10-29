@@ -77,6 +77,9 @@ export const handlers = [
   http.get(`${api}/tickets/:id`, () =>
     HttpResponse.json({ data: { ...ticket, comments: [], attachments: [], history: [] } }),
   ),
+  http.post(`${api}/tickets/:id/comments`, () =>
+    HttpResponse.json({ message: 'Kommentar gespeichert.' }, { status: 201 }),
+  ),
 ];
 
 export const server = setupServer(...handlers);
