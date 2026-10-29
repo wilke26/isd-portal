@@ -20,7 +20,7 @@ export function AssetsPage() {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
 
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['assets', search],
     queryFn: () => listAssets(search),
   });
@@ -87,7 +87,10 @@ export function AssetsPage() {
 
       {isLoading && <LoadingState label="Assets werden geladen …" />}
       {isError && (
-        <ErrorState message={error instanceof Error ? error.message : 'Assets konnten nicht geladen werden.'} />
+        <ErrorState
+          message={error instanceof Error ? error.message : 'Assets konnten nicht geladen werden.'}
+          onRetry={() => void refetch()}
+        />
       )}
 
       {data && data.data.length === 0 && (

@@ -7,7 +7,7 @@ export function KnowledgeBasePage() {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
 
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['kb-articles', search],
     queryFn: () => listArticles(search),
   });
@@ -82,7 +82,10 @@ export function KnowledgeBasePage() {
 
       {isLoading && <LoadingState label="Artikel werden geladen …" />}
       {isError && (
-        <ErrorState message={error instanceof Error ? error.message : 'Artikel konnten nicht geladen werden.'} />
+        <ErrorState
+          message={error instanceof Error ? error.message : 'Artikel konnten nicht geladen werden.'}
+          onRetry={() => void refetch()}
+        />
       )}
 
       {data && data.data.length === 0 && (

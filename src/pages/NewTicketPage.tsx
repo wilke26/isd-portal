@@ -34,7 +34,9 @@ export function NewTicketPage() {
     mutationFn: createTicket,
     onSuccess: (ticket) => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
-      navigate(`/tickets/${ticket.id}`);
+      navigate(`/tickets/${ticket.id}`, {
+        state: { successMessage: 'Dein Ticket wurde erfolgreich erstellt.' },
+      });
     },
   });
 

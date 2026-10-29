@@ -37,6 +37,7 @@ describe('requester portal flow', () => {
     await user.click(screen.getByRole('button', { name: 'Ticket erstellen' }));
 
     expect(await screen.findByRole('heading', { name: 'VPN funktioniert nicht' })).toBeInTheDocument();
+    expect(screen.getByText('Dein Ticket wurde erfolgreich erstellt.')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Abmelden' }));
     expect(await screen.findByRole('button', { name: 'Anmelden' })).toBeInTheDocument();
@@ -96,6 +97,66 @@ describe('requester portal flow', () => {
     expect(await screen.findByText('Dieser Betreff kann nicht verwendet werden.')).toBeInTheDocument();
     expect(screen.getByLabelText('Betreff')).toHaveAttribute('aria-invalid', 'true');
     expect(screen.queryByText('The given data was invalid.')).not.toBeInTheDocument();
+  });
+
+  test('confirms a saved ticket comment and clears the input', async () => {
+    const user = userEvent.setup();
+    sessionStorage.setItem('isd_portal_token', 'existing-token');
+
+    renderApp(['/tickets/42']);
+
+    expect(await screen.findByRole('heading', { name: 'VPN funktioniert nicht' })).toBeInTheDocument();
+    const commentInput = screen.getByLabelText('Kommentar hinzufügen');
+    await user.type(commentInput, 'Weitere Informationen zum Fehler.');
+    await user.click(screen.getByRole('button', { name: 'Kommentar senden' }));
+
+    expect(await screen.findByText('Dein Kommentar wurde gespeichert.')).toBeInTheDocument();
+    expect(commentInput).toHaveValue('');
+  });
+
+  test('retries a temporarily failed ticket request', async () => {
+    const user = userEvent.setup();
+    sessionStorage.setItem('isd_portal_token', 'existing-token');
+    let requests = 0;
+
+    server.use(
+      http.get(`${api}/tickets`, () => {
+        requests += 1;
+
+        if (requests === 1) {
+          return HttpResponse.json({ message: 'Dienst vorübergehend nicht verfügbar.' }, { status: 503 });
+        }
+
+        return HttpResponse.json({
+          data: [{
+            id: 42,
+            title: 'VPN funktioniert nicht',
+            description: 'Der Verbindungsaufbau schlägt fehl.',
+            status: { value: 'open', label: 'Offen', color: 'blue' },
+            priority: { value: 'medium', label: 'Mittel', color: 'blue' },
+            requester: { id: 3, name: 'Ada Lovelace', email: 'ada@example.test' },
+            assignee: null,
+            category: null,
+            asset: null,
+            due_at: null,
+            resolved_at: null,
+            closed_at: null,
+            created_at: '2026-08-30T10:00:00Z',
+            updated_at: '2026-08-30T10:00:00Z',
+          }],
+          links: { first: null, last: null, prev: null, next: null },
+          meta: { current_page: 1, last_page: 1, per_page: 15, total: 1 },
+        });
+      }),
+    );
+
+    renderApp(['/tickets']);
+
+    expect(await screen.findByText('Das hat nicht geklappt')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Erneut versuchen' }));
+
+    expect(await screen.findByText('VPN funktioniert nicht')).toBeInTheDocument();
+    expect(requests).toBe(2);
   });
 
   test('clears an expired session when a protected API request returns 401', async () => {
