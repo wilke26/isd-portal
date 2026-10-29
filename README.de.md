@@ -172,8 +172,9 @@ Das Portal besitzt nun ein ISD-spezifisches Erscheinungsbild, einen gebrandeten
 Login und einen responsiven Anwendungsrahmen. Der Ticketbereich stellt Status,
 Priorität, Zuständigkeit, Zeitangaben und Gesprächsverlauf konsistent dar. Die
 Wissensdatenbank ergänzt eine gezielte Suche, übersichtliche Artikelkarten,
-Schlagwörter, Kategorien und aufklappbare vollständige Inhalte. Weitere Iterationen
-können dieselbe Gestaltungstiefe auf die verbleibenden Ressourcenseiten übertragen,
+Schlagwörter, Kategorien und aufklappbare vollständige Inhalte. Der Asset-Bereich
+nutzt responsive Gerätekarten mit Angaben zu Zuweisung, Garantie, Inventar und
+Status. Weitere Iterationen können die verbleibenden Requester-Abläufe verfeinern,
 ohne die bestehende API- und Barrierefreiheitsbasis zu verändern.
 
 ## Lizenz

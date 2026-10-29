@@ -96,7 +96,10 @@ describe('requester portal flow', () => {
             notes: null,
             category: { id: 4, name: 'Notebooks' },
             status: { id: 2, name: 'Ausgegeben', color: '#2563eb' },
-            current_assignment: null,
+            current_assignment: {
+              user: { id: 3, name: 'Ada Lovelace', email: 'ada@example.test' },
+              assigned_at: '2026-08-01T10:00:00Z',
+            },
             created_at: '2025-02-10T10:00:00Z',
             updated_at: '2026-08-01T10:00:00Z',
           }],
@@ -111,12 +114,19 @@ describe('requester portal flow', () => {
     expect(await screen.findByText('ThinkPad X1 Carbon')).toBeInTheDocument();
     expect(screen.getByText('NB-008')).toBeInTheDocument();
     expect(screen.getByText('Notebooks')).toBeInTheDocument();
+    expect(screen.getAllByText('Ada Lovelace')).toHaveLength(2);
+    expect(screen.getByText('seit 01.08.2026')).toBeInTheDocument();
+    expect(screen.getByText('10.02.2028')).toBeInTheDocument();
 
     await user.type(screen.getByLabelText('Assets durchsuchen'), '  docking station  ');
     await user.click(screen.getByRole('button', { name: 'Suchen' }));
 
-    expect(await screen.findByText('Keine passenden Assets gefunden.')).toBeInTheDocument();
+    expect(await screen.findByText('Keine passenden Assets gefunden')).toBeInTheDocument();
     expect(requestedSearch).toBe('docking station');
+
+    await user.click(screen.getByRole('button', { name: 'Alle Assets anzeigen' }));
+    expect(await screen.findByText('ThinkPad X1 Carbon')).toBeInTheDocument();
+    expect(requestedSearch).toBeNull();
   });
 
   test('searches the knowledge base and exposes complete article content', async () => {
