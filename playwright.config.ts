@@ -5,7 +5,9 @@ const externalBaseUrl = process.env.PLAYWRIGHT_BASE_URL;
 export default defineConfig({
   testDir: './e2e',
   retries: process.env.CI ? 2 : 0,
-  reporter: process.env.CI ? 'github' : 'list',
+  reporter: process.env.CI
+    ? [['github'], ['html', { open: 'never' }]]
+    : 'list',
   use: { baseURL: externalBaseUrl ?? 'http://127.0.0.1:4173', trace: 'on-first-retry' },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: externalBaseUrl

@@ -168,8 +168,10 @@ in der lokalen Git-Konfiguration des Runners.
 
 ## Nächste Schritte
 
-1. Visuelles Design/Branding ist in diesem Grundgerüst bewusst neutral
-   gehalten — eigener Schritt, sobald die Feature-Basis steht
+Das Portal besitzt nun ein ISD-spezifisches Erscheinungsbild, einen gebrandeten
+Login und einen responsiven Anwendungsrahmen. Weitere Iterationen können die
+einzelnen Ressourcenseiten verfeinern, ohne die bestehende API- und
+Barrierefreiheitsbasis zu verändern.
 
 ## Lizenz
 
