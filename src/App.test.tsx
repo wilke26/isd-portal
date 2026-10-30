@@ -192,6 +192,34 @@ describe('requester portal flow', () => {
     expect(requestedPages).toEqual([1, 2]);
   });
 
+  test('keeps paginated ticket lists separate from ticket detail cache entries', async () => {
+    const user = userEvent.setup();
+    sessionStorage.setItem('isd_portal_token', 'existing-token');
+    const ticketOne = { ...ticket, id: 1, title: 'Ticket mit ID eins' };
+
+    server.use(
+      http.get(`${api}/tickets`, () =>
+        HttpResponse.json({
+          data: [ticketOne],
+          links: { first: null, last: null, prev: null, next: 'next' },
+          meta: { current_page: 1, last_page: 2, per_page: 15, total: 16 },
+        }),
+      ),
+      http.get(`${api}/tickets/1`, () =>
+        HttpResponse.json({
+          data: { ...ticketOne, comments: [], attachments: [], history: [] },
+        }),
+      ),
+    );
+
+    renderApp(['/tickets']);
+
+    await user.click(await screen.findByRole('link', { name: /Ticket mit ID eins/ }));
+
+    expect(await screen.findByRole('heading', { name: 'Ticket mit ID eins' })).toBeInTheDocument();
+    expect(screen.getByText('Ticket #1')).toBeInTheDocument();
+  });
+
   test('clears an expired session when a protected API request returns 401', async () => {
     sessionStorage.setItem('isd_portal_token', 'expired-token');
     server.use(

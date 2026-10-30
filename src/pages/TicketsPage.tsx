@@ -11,7 +11,7 @@ export function TicketsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = pageFromSearchParams(searchParams);
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['tickets', page],
+    queryKey: ['tickets', 'list', page],
     queryFn: () => listTickets(page),
   });
 
