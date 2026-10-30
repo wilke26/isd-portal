@@ -1,7 +1,10 @@
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { listAssets } from '../api/assets';
 import { ErrorState, LoadingState } from '../components/QueryState';
+import { Pagination } from '../components/Pagination';
+import { pageFromSearchParams, searchParamsWithPage } from '../lib/pagination';
 
 const dateFormatter = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium' });
 
@@ -17,22 +20,44 @@ function statusColor(value: string | undefined) {
 }
 
 export function AssetsPage() {
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = searchParams.get('search')?.trim() ?? '';
+  const page = pageFromSearchParams(searchParams);
+  const [searchInput, setSearchInput] = useState(search);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['assets', search],
-    queryFn: () => listAssets(search),
+    queryKey: ['assets', search, page],
+    queryFn: () => listAssets(search, page),
   });
+
+  useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
+
+  useEffect(() => {
+    if (data && page > data.meta.last_page) {
+      setSearchParams(
+        (current) => searchParamsWithPage(current, data.meta.last_page),
+        { replace: true },
+      );
+    }
+  }, [data, page, setSearchParams]);
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setSearch(searchInput.trim());
+    const next = new URLSearchParams();
+    const value = searchInput.trim();
+
+    if (value) next.set('search', value);
+    setSearchParams(next);
   };
 
   const clearSearch = () => {
-    setSearchInput('');
-    setSearch('');
+    setSearchParams(new URLSearchParams());
+  };
+
+  const changePage = (nextPage: number) => {
+    setSearchParams((current) => searchParamsWithPage(current, nextPage));
   };
 
   return (
@@ -200,6 +225,11 @@ export function AssetsPage() {
               </li>
             ))}
           </ul>
+          <Pagination
+            currentPage={data.meta.current_page}
+            lastPage={data.meta.last_page}
+            onPageChange={changePage}
+          />
         </section>
       )}
     </div>
