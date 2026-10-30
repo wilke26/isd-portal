@@ -177,9 +177,10 @@ nutzt responsive Gerätekarten mit Angaben zu Zuweisung, Garantie, Inventar und
 Status. Die Ticketanlage bietet geführte Eingaben, Prioritätsauswahl,
 feldbezogene Validierung, Zeichenrückmeldung und geschütztes Absenden. Gemeinsame
 Lade-, Fehler-, Wiederholen- und Erfolgsrückmeldungen machen asynchrone Abläufe
-verständlich und kündigen wichtige Änderungen barrierefrei an. Weitere Iterationen
-können verbleibende Interaktionsdetails verfeinern, ohne die bestehende API-Basis
-zu verändern.
+verständlich und kündigen wichtige Änderungen barrierefrei an. Eine gemeinsame
+Seitennavigation erschließt alle Tickets, Wissensartikel und zugewiesenen Assets;
+Seite und Suchzustand bleiben dabei in der URL erhalten. Weitere Iterationen können
+verbleibende Interaktionsdetails verfeinern, ohne die bestehende API-Basis zu verändern.
 
 ## Lizenz
 

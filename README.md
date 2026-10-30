@@ -173,8 +173,10 @@ workspace uses responsive device cards with assignment, warranty, inventory, and
 status information. Ticket creation now provides guided inputs, priority selection,
 field-level validation, character feedback, and guarded submission. Shared loading,
 error, retry, and success feedback keeps asynchronous flows understandable and
-announces important changes accessibly. Further iterations can refine the remaining
-interaction details without changing the established API foundations.
+announces important changes accessibly. Shared pagination now exposes every ticket,
+knowledge article, and assigned asset while keeping page and search state in the URL.
+Further iterations can refine the remaining interaction details without changing
+the established API foundations.
 
 ## License
 

@@ -2,8 +2,10 @@ import { apiFetch } from './client.ts';
 import type { ApiMessage, ApiResource, CreateTicketInput, Paginated, Ticket, TicketDetail } from '../types/index.ts';
 
 // GET /tickets ist laut Brief serverseitig bereits auf eigene Tickets gefiltert.
-export function listTickets(): Promise<Paginated<Ticket>> {
-  return apiFetch<Paginated<Ticket>>('/tickets');
+export function listTickets(page = 1): Promise<Paginated<Ticket>> {
+  const query = page > 1 ? `?page=${page}` : '';
+
+  return apiFetch<Paginated<Ticket>>(`/tickets${query}`);
 }
 
 export async function getTicket(id: number): Promise<TicketDetail> {

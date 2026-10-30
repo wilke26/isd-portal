@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, test } from 'vitest';
 import { renderApp } from './test/renderApp';
-import { server } from './test/server';
+import { article, asset, server, ticket } from './test/server';
 
 const api = 'https://isd.local/api/v1';
 
@@ -159,6 +159,67 @@ describe('requester portal flow', () => {
     expect(requests).toBe(2);
   });
 
+  test('loads the requested ticket page through the shared pagination controls', async () => {
+    const user = userEvent.setup();
+    sessionStorage.setItem('isd_portal_token', 'existing-token');
+    const requestedPages: number[] = [];
+
+    server.use(
+      http.get(`${api}/tickets`, ({ request }) => {
+        const page = Number(new URL(request.url).searchParams.get('page') ?? '1');
+        requestedPages.push(page);
+
+        return HttpResponse.json({
+          data: [{
+            ...ticket,
+            id: page === 2 ? 43 : ticket.id,
+            title: page === 2 ? 'Drucker im Büro nicht erreichbar' : ticket.title,
+          }],
+          links: { first: null, last: null, prev: page === 2 ? 'previous' : null, next: page === 1 ? 'next' : null },
+          meta: { current_page: page, last_page: 2, per_page: 15, total: 16 },
+        });
+      }),
+    );
+
+    renderApp(['/tickets']);
+
+    expect(await screen.findByText('VPN funktioniert nicht')).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Seitennavigation' })).toHaveTextContent('Seite 1 von 2');
+    await user.click(screen.getByRole('button', { name: 'Weiter →' }));
+
+    expect(await screen.findByText('Drucker im Büro nicht erreichbar')).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Seitennavigation' })).toHaveTextContent('Seite 2 von 2');
+    expect(requestedPages).toEqual([1, 2]);
+  });
+
+  test('keeps paginated ticket lists separate from ticket detail cache entries', async () => {
+    const user = userEvent.setup();
+    sessionStorage.setItem('isd_portal_token', 'existing-token');
+    const ticketOne = { ...ticket, id: 1, title: 'Ticket mit ID eins' };
+
+    server.use(
+      http.get(`${api}/tickets`, () =>
+        HttpResponse.json({
+          data: [ticketOne],
+          links: { first: null, last: null, prev: null, next: 'next' },
+          meta: { current_page: 1, last_page: 2, per_page: 15, total: 16 },
+        }),
+      ),
+      http.get(`${api}/tickets/1`, () =>
+        HttpResponse.json({
+          data: { ...ticketOne, comments: [], attachments: [], history: [] },
+        }),
+      ),
+    );
+
+    renderApp(['/tickets']);
+
+    await user.click(await screen.findByRole('link', { name: /Ticket mit ID eins/ }));
+
+    expect(await screen.findByRole('heading', { name: 'Ticket mit ID eins' })).toBeInTheDocument();
+    expect(screen.getByText('Ticket #1')).toBeInTheDocument();
+  });
+
   test('clears an expired session when a protected API request returns 401', async () => {
     sessionStorage.setItem('isd_portal_token', 'expired-token');
     server.use(
@@ -194,33 +255,29 @@ describe('requester portal flow', () => {
     const user = userEvent.setup();
     sessionStorage.setItem('isd_portal_token', 'existing-token');
     let requestedSearch: string | null = null;
+    let requestedPage: string | null = null;
 
     server.use(
       http.get(`${api}/assets`, ({ request }) => {
-        requestedSearch = new URL(request.url).searchParams.get('search');
+        const url = new URL(request.url);
+        requestedSearch = url.searchParams.get('search');
+        requestedPage = url.searchParams.get('page');
+        const page = Number(requestedPage ?? '1');
 
         return HttpResponse.json({
           data: requestedSearch ? [] : [{
-            id: 8,
-            asset_tag: 'NB-008',
-            name: 'ThinkPad X1 Carbon',
-            serial_number: 'PF-12345',
-            manufacturer: 'Lenovo',
-            model: 'X1 Carbon',
-            purchased_at: '2025-02-10',
-            warranty_until: '2028-02-10',
-            notes: null,
-            category: { id: 4, name: 'Notebooks' },
-            status: { id: 2, name: 'Ausgegeben', color: '#2563eb' },
-            current_assignment: {
-              user: { id: 3, name: 'Ada Lovelace', email: 'ada@example.test' },
-              assigned_at: '2026-08-01T10:00:00Z',
-            },
-            created_at: '2025-02-10T10:00:00Z',
-            updated_at: '2026-08-01T10:00:00Z',
+            ...asset,
+            id: page === 2 ? 9 : asset.id,
+            asset_tag: page === 2 ? 'DOCK-009' : asset.asset_tag,
+            name: page === 2 ? 'USB-C Dockingstation' : asset.name,
           }],
-          links: { first: null, last: null, prev: null, next: null },
-          meta: { current_page: 1, last_page: 1, per_page: 15, total: requestedSearch ? 0 : 1 },
+          links: { first: null, last: null, prev: page === 2 ? 'previous' : null, next: page === 1 ? 'next' : null },
+          meta: {
+            current_page: page,
+            last_page: requestedSearch ? 1 : 2,
+            per_page: 15,
+            total: requestedSearch ? 0 : 16,
+          },
         });
       }),
     );
@@ -234,11 +291,16 @@ describe('requester portal flow', () => {
     expect(screen.getByText('seit 01.08.2026')).toBeInTheDocument();
     expect(screen.getByText('10.02.2028')).toBeInTheDocument();
 
+    await user.click(screen.getByRole('button', { name: 'Weiter →' }));
+    expect(await screen.findByText('USB-C Dockingstation')).toBeInTheDocument();
+    expect(requestedPage).toBe('2');
+
     await user.type(screen.getByLabelText('Assets durchsuchen'), '  docking station  ');
     await user.click(screen.getByRole('button', { name: 'Suchen' }));
 
     expect(await screen.findByText('Keine passenden Assets gefunden')).toBeInTheDocument();
     expect(requestedSearch).toBe('docking station');
+    expect(requestedPage).toBeNull();
 
     await user.click(screen.getByRole('button', { name: 'Alle Assets anzeigen' }));
     expect(await screen.findByText('ThinkPad X1 Carbon')).toBeInTheDocument();
@@ -249,25 +311,29 @@ describe('requester portal flow', () => {
     const user = userEvent.setup();
     sessionStorage.setItem('isd_portal_token', 'existing-token');
     let requestedSearch: string | null = null;
+    let requestedPage: string | null = null;
 
     server.use(
       http.get(`${api}/kb/articles`, ({ request }) => {
-        requestedSearch = new URL(request.url).searchParams.get('search');
+        const url = new URL(request.url);
+        requestedSearch = url.searchParams.get('search');
+        requestedPage = url.searchParams.get('page');
+        const page = Number(requestedPage ?? '1');
 
         return HttpResponse.json({
           data: requestedSearch ? [] : [{
-            id: 5,
-            title: 'VPN-Verbindung einrichten',
-            slug: 'vpn-verbindung-einrichten',
-            body: 'Öffne den VPN-Client und melde dich mit deinem Unternehmenskonto an.',
-            addendum: 'Starte den Client nach einer Aktualisierung neu.',
-            status: { value: 'published', label: 'Veröffentlicht' },
-            author: { id: 3, name: 'Ada Lovelace', email: 'ada@example.test' },
-            category: { id: 2, name: 'Netzwerk', slug: 'netzwerk' },
-            tags: [{ id: 3, name: 'VPN', slug: 'vpn' }],
+            ...article,
+            id: page === 2 ? 6 : article.id,
+            title: page === 2 ? 'Drucker neu verbinden' : article.title,
+            slug: page === 2 ? 'drucker-neu-verbinden' : article.slug,
           }],
-          links: { first: null, last: null, prev: null, next: null },
-          meta: { current_page: 1, last_page: 1, per_page: 15, total: requestedSearch ? 0 : 1 },
+          links: { first: null, last: null, prev: page === 2 ? 'previous' : null, next: page === 1 ? 'next' : null },
+          meta: {
+            current_page: page,
+            last_page: requestedSearch ? 1 : 2,
+            per_page: 15,
+            total: requestedSearch ? 0 : 16,
+          },
         });
       }),
     );
@@ -278,11 +344,16 @@ describe('requester portal flow', () => {
     expect(screen.getByText('Netzwerk')).toBeInTheDocument();
     expect(screen.getByText('VPN')).toBeInTheDocument();
 
+    await user.click(screen.getByRole('button', { name: 'Weiter →' }));
+    expect(await screen.findByText('Drucker neu verbinden')).toBeInTheDocument();
+    expect(requestedPage).toBe('2');
+
     await user.type(screen.getByLabelText('Artikel durchsuchen'), '  drucker  ');
     await user.click(screen.getByRole('button', { name: 'Suchen' }));
 
     expect(await screen.findByText('Keine passenden Artikel gefunden')).toBeInTheDocument();
     expect(requestedSearch).toBe('drucker');
+    expect(requestedPage).toBeNull();
 
     await user.click(screen.getByRole('button', { name: 'Alle Artikel anzeigen' }));
     expect(await screen.findByText('VPN-Verbindung einrichten')).toBeInTheDocument();

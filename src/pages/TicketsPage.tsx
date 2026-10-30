@@ -1,14 +1,32 @@
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { listTickets } from '../api/tickets';
 import { LoadingState, ErrorState } from '../components/QueryState';
 import { FormattedDate, TicketPriority, TicketStatusBadge } from '../components/TicketPresentation';
+import { Pagination } from '../components/Pagination';
+import { pageFromSearchParams, searchParamsWithPage } from '../lib/pagination';
 
 export function TicketsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = pageFromSearchParams(searchParams);
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['tickets'],
-    queryFn: listTickets,
+    queryKey: ['tickets', 'list', page],
+    queryFn: () => listTickets(page),
   });
+
+  useEffect(() => {
+    if (data && page > data.meta.last_page) {
+      setSearchParams(
+        (current) => searchParamsWithPage(current, data.meta.last_page),
+        { replace: true },
+      );
+    }
+  }, [data, page, setSearchParams]);
+
+  const changePage = (nextPage: number) => {
+    setSearchParams((current) => searchParamsWithPage(current, nextPage));
+  };
 
   return (
     <div>
@@ -58,53 +76,60 @@ export function TicketsPage() {
       )}
 
       {data && data.data.length > 0 && (
-        <section aria-labelledby="ticket-list-heading" className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
-            <h2 id="ticket-list-heading" className="text-sm font-bold text-ink-950">
-              Aktuelle Anfragen
-            </h2>
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
-              {data.meta.total} {data.meta.total === 1 ? 'Ticket' : 'Tickets'}
-            </span>
-          </div>
-          <ul className="divide-y divide-slate-200">
-            {data.data.map((ticket) => (
-              <li key={ticket.id}>
-                <Link
-                  to={`/tickets/${ticket.id}`}
-                  className="group block px-5 py-5 transition hover:bg-slate-50 sm:px-6"
-                >
-                  <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs font-bold text-slate-400">#{ticket.id}</span>
-                        <TicketStatusBadge value={ticket.status.value} label={ticket.status.label} />
+        <>
+          <section aria-labelledby="ticket-list-heading" className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
+              <h2 id="ticket-list-heading" className="text-sm font-bold text-ink-950">
+                Aktuelle Anfragen
+              </h2>
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
+                {data.meta.total} {data.meta.total === 1 ? 'Ticket' : 'Tickets'}
+              </span>
+            </div>
+            <ul className="divide-y divide-slate-200">
+              {data.data.map((ticket) => (
+                <li key={ticket.id}>
+                  <Link
+                    to={`/tickets/${ticket.id}`}
+                    className="group block px-5 py-5 transition hover:bg-slate-50 sm:px-6"
+                  >
+                    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs font-bold text-slate-400">#{ticket.id}</span>
+                          <TicketStatusBadge value={ticket.status.value} label={ticket.status.label} />
+                        </div>
+                        <h3 className="mt-2 truncate text-base font-bold text-ink-950 transition group-hover:text-brand-800">
+                          {ticket.title}
+                        </h3>
+                        <p className="mt-1 line-clamp-2 max-w-2xl text-sm leading-6 text-slate-600">
+                          {ticket.description}
+                        </p>
                       </div>
-                      <h3 className="mt-2 truncate text-base font-bold text-ink-950 transition group-hover:text-brand-800">
-                        {ticket.title}
-                      </h3>
-                      <p className="mt-1 line-clamp-2 max-w-2xl text-sm leading-6 text-slate-600">
-                        {ticket.description}
-                      </p>
+                      <span className="hidden pt-1 text-xl text-slate-300 transition group-hover:translate-x-1 group-hover:text-brand-700 sm:block" aria-hidden="true">
+                        →
+                      </span>
                     </div>
-                    <span className="hidden pt-1 text-xl text-slate-300 transition group-hover:translate-x-1 group-hover:text-brand-700 sm:block" aria-hidden="true">
-                      →
-                    </span>
-                  </div>
-                  <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 pt-3">
-                    <TicketPriority value={ticket.priority.value} label={ticket.priority.label} />
-                    <span className="text-xs text-slate-500">
-                      {ticket.category?.name ?? 'Ohne Kategorie'}
-                    </span>
-                    <span className="text-xs text-slate-500">
-                      Aktualisiert <FormattedDate value={ticket.updated_at} />
-                    </span>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
+                    <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 pt-3">
+                      <TicketPriority value={ticket.priority.value} label={ticket.priority.label} />
+                      <span className="text-xs text-slate-500">
+                        {ticket.category?.name ?? 'Ohne Kategorie'}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        Aktualisiert <FormattedDate value={ticket.updated_at} />
+                      </span>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+          <Pagination
+            currentPage={data.meta.current_page}
+            lastPage={data.meta.last_page}
+            onPageChange={changePage}
+          />
+        </>
       )}
     </div>
   );
