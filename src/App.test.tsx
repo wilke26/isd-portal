@@ -49,6 +49,29 @@ describe('requester portal flow', () => {
     expect(screen.getByRole('main')).toHaveFocus();
   });
 
+  test('opens, closes and restores focus for the mobile navigation', async () => {
+    const user = userEvent.setup();
+    sessionStorage.setItem('isd_portal_token', 'existing-token');
+    renderApp(['/tickets']);
+
+    expect(await screen.findByRole('heading', { name: 'Meine Tickets' })).toBeInTheDocument();
+    const menuButton = screen.getByRole('button', { name: 'Navigation öffnen' });
+
+    await user.click(menuButton);
+    expect(menuButton).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('link', { name: 'Tickets' })).toHaveFocus();
+
+    await user.keyboard('{Escape}');
+    expect(menuButton).toHaveAttribute('aria-expanded', 'false');
+    expect(menuButton).toHaveFocus();
+
+    await user.click(menuButton);
+    await user.click(screen.getByRole('link', { name: 'Wissensdatenbank' }));
+
+    expect(await screen.findByRole('heading', { name: 'Wissensdatenbank' })).toBeInTheDocument();
+    expect(menuButton).toHaveAttribute('aria-expanded', 'false');
+  });
+
   test('shows a recoverable not-found page for unknown authenticated routes', async () => {
     const user = userEvent.setup();
     sessionStorage.setItem('isd_portal_token', 'existing-token');

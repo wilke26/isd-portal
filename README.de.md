@@ -171,7 +171,8 @@ in der lokalen Git-Konfiguration des Runners.
 Routenbezogene Seitentitel, ein Sprunglink, die Fokusführung nach der Navigation
 und eine eigene Fehlerseite machen direkte Aufrufe und die Tastaturbedienung
 vorhersehbar. Das Portal besitzt außerdem ein ISD-spezifisches Erscheinungsbild,
-einen gebrandeten Login und einen responsiven Anwendungsrahmen. Der Ticketbereich stellt Status,
+einen gebrandeten Login und einen responsiven Anwendungsrahmen mit einer
+tastaturbedienbaren mobilen Navigation. Der Ticketbereich stellt Status,
 Priorität, Zuständigkeit, Zeitangaben und Gesprächsverlauf konsistent dar. Die
 Wissensdatenbank ergänzt eine gezielte Suche, übersichtliche Artikelkarten,
 Schlagwörter, Kategorien und aufklappbare vollständige Inhalte. Der Asset-Bereich
