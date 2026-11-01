@@ -1,8 +1,16 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type KeyboardEvent,
+} from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useBeforeUnload, useBlocker, useNavigate } from 'react-router-dom';
 import { createTicket } from '../api/tickets';
 import { ApiError } from '../api/client';
+import { useUnsavedChanges } from '../context/unsaved-changes-context';
 import type { TicketPriorityValue } from '../types';
 
 const titleMaxLength = 255;
@@ -24,15 +32,42 @@ function apiFieldError(error: unknown, field: FieldName) {
 export function NewTicketPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { discardUnsavedChanges, hasUnsavedChanges, setUnsavedChanges } = useUnsavedChanges();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<TicketPriorityValue>('medium');
   const [clientErrors, setClientErrors] = useState<ClientErrors>({});
+  const isDirty = title.length > 0 || description.length > 0 || priority !== 'medium';
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      hasUnsavedChanges() && currentLocation.pathname !== nextLocation.pathname,
+  );
+
+  useEffect(() => {
+    setUnsavedChanges(isDirty);
+  }, [isDirty, setUnsavedChanges]);
+
+  useEffect(
+    () => () => {
+      discardUnsavedChanges();
+    },
+    [discardUnsavedChanges],
+  );
+
+  useBeforeUnload(
+    useCallback(
+      (event) => {
+        if (hasUnsavedChanges()) event.preventDefault();
+      },
+      [hasUnsavedChanges],
+    ),
+  );
 
   const mutation = useMutation({
     mutationFn: createTicket,
     onSuccess: (ticket) => {
+      discardUnsavedChanges();
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
       navigate(`/tickets/${ticket.id}`, {
         state: { successMessage: 'Dein Ticket wurde erfolgreich erstellt.' },
@@ -73,6 +108,39 @@ export function NewTicketPage() {
     if (Object.keys(errors).length > 0) return;
 
     mutation.mutate({ title: title.trim(), description: description.trim(), priority });
+  };
+
+  const discardAndLeave = () => {
+    discardUnsavedChanges();
+    if (blocker.state === 'blocked') blocker.proceed();
+  };
+
+  const keepEditing = () => {
+    if (blocker.state === 'blocked') blocker.reset();
+  };
+
+  const handleDialogKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      keepEditing();
+      return;
+    }
+
+    if (event.key !== 'Tab') return;
+
+    const buttons = Array.from(
+      event.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'),
+    );
+    const firstButton = buttons[0];
+    const lastButton = buttons.at(-1);
+
+    if (event.shiftKey && document.activeElement === firstButton) {
+      event.preventDefault();
+      lastButton?.focus();
+    } else if (!event.shiftKey && document.activeElement === lastButton) {
+      event.preventDefault();
+      firstButton?.focus();
+    }
   };
 
   return (
@@ -208,6 +276,49 @@ export function NewTicketPage() {
           </p>
         </aside>
       </div>
+
+      {blocker.state === 'blocked' && (
+        <div
+          role="presentation"
+          className="fixed inset-0 z-50 grid place-items-center bg-ink-950/60 p-4 backdrop-blur-sm"
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="discard-ticket-heading"
+            aria-describedby="discard-ticket-description"
+            onKeyDown={handleDialogKeyDown}
+            className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl sm:p-7"
+          >
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">
+              Ungespeicherte Änderungen
+            </p>
+            <h2 id="discard-ticket-heading" className="mt-2 text-xl font-bold text-ink-950">
+              Ticketentwurf verwerfen?
+            </h2>
+            <p id="discard-ticket-description" className="mt-3 text-sm leading-6 text-slate-600">
+              Deine bisherigen Eingaben gehen verloren, wenn du diese Seite verlässt.
+            </p>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={discardAndLeave}
+                className="rounded-lg border border-red-300 px-4 py-2.5 text-sm font-bold text-red-700 transition hover:bg-red-50"
+              >
+                Entwurf verwerfen
+              </button>
+              <button
+                type="button"
+                autoFocus
+                onClick={keepEditing}
+                className="rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-brand-800"
+              >
+                Weiter bearbeiten
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

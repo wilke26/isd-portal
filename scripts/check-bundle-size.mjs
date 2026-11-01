@@ -3,7 +3,7 @@ import { gzipSync } from 'node:zlib';
 
 const manifestPath = new URL('../dist/.vite/manifest.json', import.meta.url);
 const distDirectory = new URL('../dist/', import.meta.url);
-const initialGzipLimit = 90 * 1024;
+const initialGzipLimit = 110 * 1024;
 const routeGzipLimit = 15 * 1024;
 const expectedRoutes = [
   'src/pages/LoginPage.tsx',

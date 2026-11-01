@@ -155,7 +155,7 @@ Requests.
 Die Seitenrouten werden als separate JavaScript-Chunks ausgeliefert und erst
 beim Aufruf geladen. `npm run bundle:check` wertet das Vite-Manifest aus und
 stellt sicher, dass alle sieben Seiten dynamisch bleiben, das initial geladene
-JavaScript komprimiert höchstens 90 KiB umfasst und kein einzelner Seiten-Chunk
+JavaScript komprimiert höchstens 110 KiB umfasst und kein einzelner Seiten-Chunk
 einschließlich seiner zusätzlichen Shared-Chunks 15 KiB überschreitet. Diese
 Prüfung läuft nach dem Produktions-Build auch in CI. Falls ein bereits geöffneter
 Client nach einem Deployment noch einen veralteten Chunk anfordert, lädt das
@@ -181,7 +181,9 @@ feldbezogene Validierung, Zeichenrückmeldung und geschütztes Absenden. Gemeins
 Lade-, Fehler-, Wiederholen- und Erfolgsrückmeldungen machen asynchrone Abläufe
 verständlich und kündigen wichtige Änderungen barrierefrei an. Eine gemeinsame
 Seitennavigation erschließt alle Tickets, Wissensartikel und zugewiesenen Assets;
-Seite und Suchzustand bleiben dabei in der URL erhalten. Weitere Iterationen können
+Seite und Suchzustand bleiben dabei in der URL erhalten. Ungespeicherte
+Ticketentwürfe werden bei interner Navigation, Browser-Navigation, Neuladen und
+Abmelden geschützt. Weitere Iterationen können
 verbleibende Interaktionsdetails verfeinern, ohne die bestehende API-Basis zu verändern.
 
 ## Lizenz
