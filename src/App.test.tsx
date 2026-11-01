@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, test } from 'vitest';
@@ -25,6 +25,41 @@ describe('requester portal flow', () => {
     expect(screen.getByText('ISD Portal')).toBeInTheDocument();
     expect(sessionStorage.getItem('isd_portal_token')).toBe('test-token');
     expect(localStorage.getItem('isd_portal_token')).toBeNull();
+  });
+
+  test('announces routes, updates the page title and moves focus to the main content', async () => {
+    const user = userEvent.setup();
+    sessionStorage.setItem('isd_portal_token', 'existing-token');
+    renderApp(['/tickets']);
+
+    expect(await screen.findByRole('heading', { name: 'Meine Tickets' })).toBeInTheDocument();
+    await waitFor(() => expect(document.title).toBe('Meine Tickets · ISD Portal'));
+    expect(screen.getByText('Meine Tickets geladen')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Zum Hauptinhalt' })).toHaveAttribute(
+      'href',
+      '#main-content',
+    );
+    expect(screen.getByRole('main')).toHaveFocus();
+
+    await user.click(screen.getByRole('link', { name: 'Wissensdatenbank' }));
+
+    expect(await screen.findByRole('heading', { name: 'Wissensdatenbank' })).toBeInTheDocument();
+    await waitFor(() => expect(document.title).toBe('Wissensdatenbank · ISD Portal'));
+    expect(screen.getByText('Wissensdatenbank geladen')).toBeInTheDocument();
+    expect(screen.getByRole('main')).toHaveFocus();
+  });
+
+  test('shows a recoverable not-found page for unknown authenticated routes', async () => {
+    const user = userEvent.setup();
+    sessionStorage.setItem('isd_portal_token', 'existing-token');
+    renderApp(['/missing-page']);
+
+    expect(await screen.findByRole('heading', { name: 'Seite nicht gefunden' })).toBeInTheDocument();
+    await waitFor(() => expect(document.title).toBe('Seite nicht gefunden · ISD Portal'));
+
+    await user.click(screen.getByRole('link', { name: 'Zu meinen Tickets' }));
+
+    expect(await screen.findByRole('heading', { name: 'Meine Tickets' })).toBeInTheDocument();
   });
 
   test('restores a session, creates a ticket and logs out', async () => {

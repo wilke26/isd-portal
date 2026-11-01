@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { LazyRouteErrorBoundary } from './components/LazyRouteErrorBoundary';
+import { RouteMetadata } from './components/RouteMetadata';
 import { loadLazyRouteModule } from './lib/lazyRouteRecovery';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 
@@ -40,6 +41,11 @@ const AssetsPage = lazy(() =>
     import('./pages/AssetsPage').then(({ AssetsPage }) => ({ default: AssetsPage })),
   ),
 );
+const NotFoundPage = lazy(() =>
+  loadLazyRouteModule(() =>
+    import('./pages/NotFoundPage').then(({ NotFoundPage }) => ({ default: NotFoundPage })),
+  ),
+);
 
 function PageLoading() {
   return (
@@ -59,22 +65,24 @@ function lazyPage(page: ReactNode) {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/login" element={lazyPage(<LoginPage />)} />
+    <>
+      <RouteMetadata />
+      <Routes>
+        <Route path="/login" element={lazyPage(<LoginPage />)} />
 
-      <Route element={<ProtectedRoute />}>
-        <Route element={<Layout />}>
-          <Route index element={<Navigate to="/tickets" replace />} />
-          <Route path="/tickets" element={lazyPage(<TicketsPage />)} />
-          <Route path="/tickets/new" element={lazyPage(<NewTicketPage />)} />
-          <Route path="/tickets/:id" element={lazyPage(<TicketDetailPage />)} />
-          <Route path="/kb" element={lazyPage(<KnowledgeBasePage />)} />
-          <Route path="/assets" element={lazyPage(<AssetsPage />)} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<Layout />}>
+            <Route index element={<Navigate to="/tickets" replace />} />
+            <Route path="/tickets" element={lazyPage(<TicketsPage />)} />
+            <Route path="/tickets/new" element={lazyPage(<NewTicketPage />)} />
+            <Route path="/tickets/:id" element={lazyPage(<TicketDetailPage />)} />
+            <Route path="/kb" element={lazyPage(<KnowledgeBasePage />)} />
+            <Route path="/assets" element={lazyPage(<AssetsPage />)} />
+            <Route path="*" element={lazyPage(<NotFoundPage />)} />
+          </Route>
         </Route>
-      </Route>
-
-      <Route path="*" element={<Navigate to="/tickets" replace />} />
-    </Routes>
+      </Routes>
+    </>
   );
 }
 

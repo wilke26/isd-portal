@@ -154,7 +154,7 @@ Requests.
 
 Die Seitenrouten werden als separate JavaScript-Chunks ausgeliefert und erst
 beim Aufruf geladen. `npm run bundle:check` wertet das Vite-Manifest aus und
-stellt sicher, dass alle sechs Seiten dynamisch bleiben, das initial geladene
+stellt sicher, dass alle sieben Seiten dynamisch bleiben, das initial geladene
 JavaScript komprimiert höchstens 90 KiB umfasst und kein einzelner Seiten-Chunk
 einschließlich seiner zusätzlichen Shared-Chunks 15 KiB überschreitet. Diese
 Prüfung läuft nach dem Produktions-Build auch in CI. Falls ein bereits geöffneter
@@ -168,8 +168,10 @@ in der lokalen Git-Konfiguration des Runners.
 
 ## Nächste Schritte
 
-Das Portal besitzt nun ein ISD-spezifisches Erscheinungsbild, einen gebrandeten
-Login und einen responsiven Anwendungsrahmen. Der Ticketbereich stellt Status,
+Routenbezogene Seitentitel, ein Sprunglink, die Fokusführung nach der Navigation
+und eine eigene Fehlerseite machen direkte Aufrufe und die Tastaturbedienung
+vorhersehbar. Das Portal besitzt außerdem ein ISD-spezifisches Erscheinungsbild,
+einen gebrandeten Login und einen responsiven Anwendungsrahmen. Der Ticketbereich stellt Status,
 Priorität, Zuständigkeit, Zeitangaben und Gesprächsverlauf konsistent dar. Die
 Wissensdatenbank ergänzt eine gezielte Suche, übersichtliche Artikelkarten,
 Schlagwörter, Kategorien und aufklappbare vollständige Inhalte. Der Asset-Bereich
