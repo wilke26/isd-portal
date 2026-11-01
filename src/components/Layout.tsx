@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, type ReactNode } from 'react';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/auth-context';
 import { Brand } from './Brand';
 
@@ -29,7 +29,13 @@ function NavIcon({ children }: { children: ReactNode }) {
 
 export function Layout() {
   const { user, logout } = useAuth();
+  const { pathname } = useLocation();
   const navigate = useNavigate();
+  const mainContentRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    mainContentRef.current?.focus({ preventScroll: true });
+  }, [pathname]);
 
   const handleLogout = async () => {
     await logout();
@@ -45,6 +51,12 @@ export function Layout() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <a
+        href="#main-content"
+        className="fixed left-4 top-3 z-50 -translate-y-20 rounded-lg bg-ink-950 px-4 py-2 text-sm font-bold text-white shadow-lg transition-transform focus:translate-y-0 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:ring-offset-2"
+      >
+        Zum Hauptinhalt
+      </a>
       <header className="sticky top-0 z-20 border-b border-slate-200/90 bg-white/95 shadow-[0_1px_2px_rgba(15,23,42,0.03)] backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <Brand />
@@ -101,7 +113,12 @@ export function Layout() {
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+      <main
+        id="main-content"
+        ref={mainContentRef}
+        tabIndex={-1}
+        className="mx-auto max-w-6xl px-4 py-8 focus:outline-none sm:px-6 sm:py-10"
+      >
         <Outlet />
       </main>
     </div>

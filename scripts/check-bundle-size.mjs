@@ -12,6 +12,7 @@ const expectedRoutes = [
   'src/pages/TicketDetailPage.tsx',
   'src/pages/KnowledgeBasePage.tsx',
   'src/pages/AssetsPage.tsx',
+  'src/pages/NotFoundPage.tsx',
 ];
 
 const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));

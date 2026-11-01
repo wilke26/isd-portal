@@ -152,7 +152,7 @@ configuration and requires no repository secret.
 Each page is delivered as a separate lazy-loaded JavaScript chunk. After the
 production build, `npm run bundle:check` evaluates the Vite manifest and enforces:
 
-- all six page modules remain dynamic
+- all seven page modules remain dynamic
 - the compressed initial JavaScript is at most 90 KiB
 - each route, including additional shared chunks in its static import closure,
   adds no more than 15 KiB
@@ -164,7 +164,9 @@ recovery screen rather than unmounting the UI. Missing static assets return HTTP
 
 ## Current roadmap
 
-The functional foundation is complete. The portal now includes an ISD-specific
+The functional foundation is complete. Route-aware page titles, a skip link,
+focus management after navigation, and a dedicated not-found view make direct
+navigation and keyboard use predictable. The portal also includes an ISD-specific
 visual identity, a branded login experience, and a responsive application shell.
 The requester ticket workspace presents status, priority, ownership, timestamps,
 and conversation history consistently. The knowledge base adds deliberate search,
