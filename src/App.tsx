@@ -1,6 +1,7 @@
+/* oxlint-disable react/only-export-components -- route objects are shared by browser and test routers */
 import { lazy, Suspense } from 'react';
 import type { ReactNode } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Outlet, Route, createRoutesFromElements } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { LazyRouteErrorBoundary } from './components/LazyRouteErrorBoundary';
 import { RouteMetadata } from './components/RouteMetadata';
@@ -63,27 +64,29 @@ function lazyPage(page: ReactNode) {
   );
 }
 
-function App() {
+function RootRoute() {
   return (
     <>
       <RouteMetadata />
-      <Routes>
-        <Route path="/login" element={lazyPage(<LoginPage />)} />
-
-        <Route element={<ProtectedRoute />}>
-          <Route element={<Layout />}>
-            <Route index element={<Navigate to="/tickets" replace />} />
-            <Route path="/tickets" element={lazyPage(<TicketsPage />)} />
-            <Route path="/tickets/new" element={lazyPage(<NewTicketPage />)} />
-            <Route path="/tickets/:id" element={lazyPage(<TicketDetailPage />)} />
-            <Route path="/kb" element={lazyPage(<KnowledgeBasePage />)} />
-            <Route path="/assets" element={lazyPage(<AssetsPage />)} />
-            <Route path="*" element={lazyPage(<NotFoundPage />)} />
-          </Route>
-        </Route>
-      </Routes>
+      <Outlet />
     </>
   );
 }
 
-export default App;
+export const appRoutes = createRoutesFromElements(
+  <Route element={<RootRoute />}>
+    <Route path="/login" element={lazyPage(<LoginPage />)} />
+
+    <Route element={<ProtectedRoute />}>
+      <Route element={<Layout />}>
+        <Route index element={<Navigate to="/tickets" replace />} />
+        <Route path="/tickets" element={lazyPage(<TicketsPage />)} />
+        <Route path="/tickets/new" element={lazyPage(<NewTicketPage />)} />
+        <Route path="/tickets/:id" element={lazyPage(<TicketDetailPage />)} />
+        <Route path="/kb" element={lazyPage(<KnowledgeBasePage />)} />
+        <Route path="/assets" element={lazyPage(<AssetsPage />)} />
+        <Route path="*" element={lazyPage(<NotFoundPage />)} />
+      </Route>
+    </Route>
+  </Route>,
+);

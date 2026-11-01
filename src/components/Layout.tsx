@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/auth-context';
+import { useUnsavedChanges } from '../context/unsaved-changes-context';
 import { Brand } from './Brand';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -29,6 +30,7 @@ function NavIcon({ children }: { children: ReactNode }) {
 
 export function Layout() {
   const { user, logout } = useAuth();
+  const { discardUnsavedChanges, hasUnsavedChanges } = useUnsavedChanges();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const mainContentRef = useRef<HTMLElement>(null);
@@ -38,6 +40,14 @@ export function Layout() {
   }, [pathname]);
 
   const handleLogout = async () => {
+    if (
+      hasUnsavedChanges()
+      && !window.confirm('Dein Ticketentwurf wurde noch nicht gespeichert. Trotzdem abmelden?')
+    ) {
+      return;
+    }
+
+    discardUnsavedChanges();
     await logout();
     navigate('/login', { replace: true });
   };

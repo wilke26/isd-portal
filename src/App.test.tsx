@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { renderApp } from './test/renderApp';
 import { article, asset, server, ticket } from './test/server';
 
@@ -104,6 +104,51 @@ describe('requester portal flow', () => {
     expect(await screen.findByText('Bitte gib einen aussagekräftigen Betreff ein.')).toBeInTheDocument();
     expect(screen.getByText('Bitte beschreibe dein Anliegen.')).toBeInTheDocument();
     expect(createRequests).toBe(0);
+  });
+
+  test('protects an unsaved ticket draft during in-app navigation', async () => {
+    const user = userEvent.setup();
+    sessionStorage.setItem('isd_portal_token', 'existing-token');
+    renderApp(['/tickets/new']);
+
+    const titleInput = await screen.findByLabelText('Betreff');
+    await user.type(titleInput, 'Noch nicht gespeicherter Entwurf');
+    await user.click(screen.getByRole('link', { name: 'Wissensdatenbank' }));
+
+    expect(
+      await screen.findByRole('dialog', { name: 'Ticketentwurf verwerfen?' }),
+    ).toBeInTheDocument();
+    expect(titleInput).toHaveValue('Noch nicht gespeicherter Entwurf');
+
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(titleInput).toHaveValue('Noch nicht gespeicherter Entwurf');
+
+    await user.click(screen.getByRole('link', { name: 'Abbrechen' }));
+    await user.click(await screen.findByRole('button', { name: 'Entwurf verwerfen' }));
+
+    expect(await screen.findByRole('heading', { name: 'Meine Tickets' })).toBeInTheDocument();
+  });
+
+  test('protects an unsaved ticket draft during reload and logout', async () => {
+    const user = userEvent.setup();
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    sessionStorage.setItem('isd_portal_token', 'existing-token');
+    renderApp(['/tickets/new']);
+
+    await user.type(await screen.findByLabelText('Betreff'), 'Entwurf');
+
+    const beforeUnload = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(beforeUnload);
+    expect(beforeUnload.defaultPrevented).toBe(true);
+
+    await user.click(screen.getByRole('button', { name: 'Abmelden' }));
+
+    expect(confirm).toHaveBeenCalledWith(
+      'Dein Ticketentwurf wurde noch nicht gespeichert. Trotzdem abmelden?',
+    );
+    expect(screen.getByRole('heading', { name: 'Neues Ticket' })).toBeInTheDocument();
+    expect(sessionStorage.getItem('isd_portal_token')).toBe('existing-token');
   });
 
   test('shows backend validation errors at the affected ticket field', async () => {

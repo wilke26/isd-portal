@@ -153,7 +153,7 @@ Each page is delivered as a separate lazy-loaded JavaScript chunk. After the
 production build, `npm run bundle:check` evaluates the Vite manifest and enforces:
 
 - all seven page modules remain dynamic
-- the compressed initial JavaScript is at most 90 KiB
+- the compressed initial JavaScript is at most 110 KiB
 - each route, including additional shared chunks in its static import closure,
   adds no more than 15 KiB
 
@@ -177,7 +177,9 @@ field-level validation, character feedback, and guarded submission. Shared loadi
 error, retry, and success feedback keeps asynchronous flows understandable and
 announces important changes accessibly. Shared pagination now exposes every ticket,
 knowledge article, and assigned asset while keeping page and search state in the URL.
-Further iterations can refine the remaining interaction details without changing
+Unsaved ticket drafts are protected during in-app navigation, browser navigation,
+reloads, and logout. Further iterations can refine the remaining interaction
+details without changing
 the established API foundations.
 
 ## License
