@@ -19,10 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -109,7 +109,7 @@ jobs:
 
       - name: Upload Playwright report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: playwright-report/
@@ -126,13 +126,13 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout portal
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: portal
           persist-credentials: false
 
       - name: Checkout backend
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: wilke26/isd
           ref: main
@@ -143,7 +143,7 @@ jobs:
         run: cmp portal/openapi/portal-v1.json isd/openapi/portal-v1.json
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -252,7 +252,7 @@ jobs:
 
       - name: Upload full-stack Playwright report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: full-stack-playwright-report
           path: |
