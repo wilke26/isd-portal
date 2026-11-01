@@ -5,7 +5,7 @@ import { useUnsavedChanges } from '../context/unsaved-changes-context';
 import { Brand } from './Brand';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  `group flex w-full shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors sm:w-auto ${
+  `group flex w-full shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors lg:w-auto ${
     isActive
       ? 'bg-brand-50 text-brand-800 ring-1 ring-brand-100'
       : 'text-slate-600 hover:bg-slate-100 hover:text-ink-950'
@@ -99,7 +99,7 @@ export function Layout() {
             aria-expanded={mobileMenuOpen}
             aria-label={mobileMenuOpen ? 'Navigation schließen' : 'Navigation öffnen'}
             onClick={() => setMobileMenuOpen((open) => !open)}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 sm:hidden"
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 lg:hidden"
           >
             <svg
               viewBox="0 0 24 24"
@@ -122,13 +122,13 @@ export function Layout() {
         <div
           id="primary-navigation-panel"
           onKeyDown={handleMobileMenuKeyDown}
-          className={`${mobileMenuOpen ? 'block' : 'hidden'} border-t border-slate-100 sm:block`}
+          className={`${mobileMenuOpen ? 'block' : 'hidden'} border-t border-slate-100 lg:block`}
         >
-          <div className="mx-auto max-w-6xl px-4 py-3 sm:flex sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-2">
+          <div className="mx-auto max-w-6xl px-4 py-3 sm:px-6 lg:flex lg:items-center lg:justify-between lg:gap-4 lg:py-2">
             <nav
               ref={navigationRef}
               aria-label="Hauptnavigation"
-              className="flex flex-col gap-1 sm:flex-row"
+              className="flex flex-col gap-1 lg:flex-row"
             >
               <NavLink to="/tickets" className={navLinkClass} end>
                 <NavIcon>
@@ -156,7 +156,7 @@ export function Layout() {
                 Assets
               </NavLink>
             </nav>
-            <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-200 pt-3 sm:mt-0 sm:justify-end sm:border-0 sm:pt-0">
+            <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-200 pt-3 lg:mt-0 lg:justify-end lg:border-0 lg:pt-0">
               {user && (
                 <div className="flex min-w-0 items-center gap-2.5">
                   <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand-50 text-xs font-bold text-brand-800 ring-1 ring-brand-100">
