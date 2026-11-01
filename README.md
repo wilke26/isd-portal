@@ -167,7 +167,8 @@ recovery screen rather than unmounting the UI. Missing static assets return HTTP
 The functional foundation is complete. Route-aware page titles, a skip link,
 focus management after navigation, and a dedicated not-found view make direct
 navigation and keyboard use predictable. The portal also includes an ISD-specific
-visual identity, a branded login experience, and a responsive application shell.
+visual identity, a branded login experience, and a responsive application shell
+with a keyboard-accessible mobile navigation menu.
 The requester ticket workspace presents status, priority, ownership, timestamps,
 and conversation history consistently. The knowledge base adds deliberate search,
 scannable article cards, tags, categories, and expandable full content. The asset
